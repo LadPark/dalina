@@ -26,7 +26,10 @@ def search():
     link_path = os.path.join(data_path, event, "onedrive_link.txt")
     gallery_link = open(link_path).read().strip() if os.path.exists(link_path) else None
 
-    return render_template("results.html", keyword=keyword, results=matches.values.tolist(), event=event, link=gallery_link)
+    # 배번 리스트 추출 (자동완성용)
+    bib_list = df["배번"].dropna().unique().tolist()
+
+    return render_template("results.html", keyword=keyword, results=matches.values.tolist(), event=event, link=gallery_link, suggestions=bib_list)
 
 if __name__ == "__main__":
     app.run(debug=True)
