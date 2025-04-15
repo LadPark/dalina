@@ -2,6 +2,25 @@
 <html>
 <head>
   <title>달리나 - 마라톤 사진 찾기</title>
+  <style>
+    #suggestions {
+      border: 1px solid #ccc;
+      max-height: 150px;
+      overflow-y: auto;
+      position: absolute;
+      background: white;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      width: 200px;
+    }
+    #suggestions li {
+      padding: 5px;
+    }
+    #suggestions li:hover {
+      background: #f0f0f0;
+    }
+  </style>
 </head>
 <body>
   <h1>📷 달리나: 배번으로 마라톤 사진 찾기</h1>
@@ -15,24 +34,12 @@
     </select>
 
     <label for="bib">배번:</label>
-    <input type="text" name="bib" required placeholder="예: A50994">
+    <input type="text" name="bib" id="bib" placeholder="배번을 입력하세요" autocomplete="off" required>
+    <ul id="suggestions"></ul>
 
     <button type="submit">검색</button>
   </form>
-  <!DOCTYPE html>
-<html>
-<head>
-  <title>달리나</title>
-</head>
-<body>
 
-  <!-- 이미 있는 배번 입력창 -->
-  <input type="text" name="bib" id="bib" placeholder="배번을 입력하세요" autocomplete="off">
-
-  <!-- 자동완성 리스트 출력 영역 -->
-  <ul id="suggestions" style="border:1px solid #ccc; max-height: 150px; overflow-y:auto; position:absolute; background:white;"></ul>
-
-  <!-- ✅ 자동완성 스크립트는 여기에 붙이면 됨 -->
   <script>
     const suggestions = {{ suggestions | tojson }};
     const input = document.getElementById("bib");
@@ -58,9 +65,5 @@
       });
     });
   </script>
-
-</body>
-</html>
-
 </body>
 </html>
