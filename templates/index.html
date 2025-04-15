@@ -1,10 +1,22 @@
 <!DOCTYPE html>
 <html>
-<head><title>Dalina - 배번 검색</title></head>
+<head>
+  <title>달리나 - 마라톤 사진 찾기</title>
+</head>
 <body>
-  <h1>📷 달리나: 배번으로 사진 찾기</h1>
+  <h1>📷 달리나: 배번으로 마라톤 사진 찾기</h1>
+
   <form action="/search" method="post">
-    <input type="text" name="bib" placeholder="배번을 입력하세요" required>
+    <label for="event">대회 선택:</label>
+    <select name="event" id="event" required>
+      {% for e in events %}
+        <option value="{{ e }}">{{ e }}</option>
+      {% endfor %}
+    </select>
+
+    <label for="bib">배번:</label>
+    <input type="text" name="bib" required placeholder="예: A50994">
+
     <button type="submit">검색</button>
   </form>
 </body>
