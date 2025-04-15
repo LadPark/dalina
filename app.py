@@ -9,7 +9,14 @@ data_path = "data"
 @app.route("/")
 def index():
     events = [d for d in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, d))]
-    return render_template("index.html", events=events, suggestions=[])
+
+    # 여기에 mock 배번 리스트 추가
+    mock_bibs = [
+        "50540", "50541", "50542", "50543", "50544",
+        "50545", "50546", "50547", "50548", "50549", "5054X"
+    ]
+
+    return render_template("index.html", events=events, suggestions=mock_bibs)
 
 @app.route("/search", methods=["POST"])
 def search():
