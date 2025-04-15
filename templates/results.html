@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head><title>검색 결과</title></head>
+<body>
+  <h2>배번: {{ keyword }} 검색 결과</h2>
+  {% if results %}
+    <ul>
+    {% for row in results %}
+      <li><a href="{{ row[2] }}" target="_blank">{{ row[1] }}</a></li>
+    {% endfor %}
+    </ul>
+  {% else %}
+    <p>해당 배번의 사진이 없습니다.</p>
+  {% endif %}
+  <a href="/">🔙 다시 검색</a>
+</body>
+</html>
