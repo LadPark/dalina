@@ -19,5 +19,48 @@
 
     <button type="submit">검색</button>
   </form>
+  <!DOCTYPE html>
+<html>
+<head>
+  <title>달리나</title>
+</head>
+<body>
+
+  <!-- 이미 있는 배번 입력창 -->
+  <input type="text" name="bib" id="bib" placeholder="배번을 입력하세요" autocomplete="off">
+
+  <!-- 자동완성 리스트 출력 영역 -->
+  <ul id="suggestions" style="border:1px solid #ccc; max-height: 150px; overflow-y:auto; position:absolute; background:white;"></ul>
+
+  <!-- ✅ 자동완성 스크립트는 여기에 붙이면 됨 -->
+  <script>
+    const suggestions = {{ suggestions | tojson }};
+    const input = document.getElementById("bib");
+    const list = document.getElementById("suggestions");
+
+    input.addEventListener("input", () => {
+      const value = input.value.toUpperCase();
+      list.innerHTML = "";
+
+      if (value.length < 1) return;
+
+      const matched = suggestions.filter(bib => bib.startsWith(value)).slice(0, 15);
+
+      matched.forEach(bib => {
+        const li = document.createElement("li");
+        li.textContent = bib;
+        li.style.cursor = "pointer";
+        li.onclick = () => {
+          input.value = bib;
+          list.innerHTML = "";
+        };
+        list.appendChild(li);
+      });
+    });
+  </script>
+
+</body>
+</html>
+
 </body>
 </html>
