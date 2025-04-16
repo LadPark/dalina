@@ -1,17 +1,44 @@
 <!DOCTYPE html>
 <html>
-<head><title>검색 결과</title></head>
+<head>
+  <title>검색 결과 - 달리나</title>
+  <style>
+    body {
+      font-family: sans-serif;
+    }
+    .results {
+      margin-top: 20px;
+    }
+    .results li {
+      margin-bottom: 10px;
+    }
+    iframe {
+      margin-top: 30px;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
 <body>
-  <h2>배번: {{ keyword }} 검색 결과</h2>
-  {% if results %}
-    <ul>
-    {% for row in results %}
-      <li><a href="{{ row[2] }}" target="_blank">{{ row[1] }}</a></li>
-    {% endfor %}
-    </ul>
-  {% else %}
-    <p>해당 배번의 사진이 없습니다.</p>
+  <h1>📸 {{ event }} / 배번: {{ keyword }} 검색 결과</h1>
+
+  <div class="results">
+    {% if results %}
+      <ul>
+        {% for row in results %}
+          <li>{{ row[1] }} — <a href="{{ row[2] }}" target="_blank">[다운로드]</a></li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>해당 배번의 사진이 없습니다.</p>
+    {% endif %}
+  </div>
+
+  {% if link %}
+    <hr>
+    <h3>📁 전체 사진 보기 ({{ event }})</h3>
+    <iframe src="{{ link }}" width="100%" height="700px" frameborder="0"></iframe>
   {% endif %}
-  <a href="/">🔙 다시 검색</a>
+
+  <p><a href="/">🔙 다른 배번 검색하기</a></p>
 </body>
 </html>
