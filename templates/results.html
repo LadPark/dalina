@@ -25,7 +25,9 @@
     {% if results %}
       <ul>
         {% for row in results %}
-          <li>{{ row[1] }} — <a href="{{ row[2] }}" target="_blank">[다운로드]</a></li>
+          <li>
+            <strong>{{ row[1] }}</strong> — <a href="{{ row[2] }}" target="_blank">[다운로드]</a>
+          </li>
         {% endfor %}
       </ul>
     {% else %}
