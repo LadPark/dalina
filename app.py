@@ -10,13 +10,15 @@ data_path = "data"
 def index():
     events = [d for d in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, d))]
 
-    # 여기에 mock 배번 리스트 추가
-    mock_bibs = [
-        "50540", "50541", "50542", "50543", "50544",
-        "50545", "50546", "50547", "50548", "50549", "5054X"
-    ]
+    suggestions = []
+    if events:
+        default_event = events[0]
+        csv_path = os.path.join(data_path, default_event, "results.csv")
+        if os.path.exists(csv_path):
+            df = pd.read_csv(csv_path, encoding="utf-8")
+            suggestions = df["배번"].dropna().unique().tolist()
 
-    return render_template("index.html", events=events, suggestions=mock_bibs)
+    return render_template("index.html", events=events, suggestions=suggestions)
 
 @app.route("/search", methods=["POST"])
 def search():
