@@ -12,10 +12,6 @@
     .results li {
       margin-bottom: 10px;
     }
-    iframe {
-      margin-top: 30px;
-      border: 1px solid #ccc;
-    }
   </style>
 </head>
 <body>
@@ -25,9 +21,7 @@
     {% if results %}
       <ul>
         {% for row in results %}
-          <li>
-            <strong>{{ row[1] }}</strong> — <a href="{{ row[2] }}" target="_blank">[다운로드]</a>
-          </li>
+          <li><strong>{{ row[1] }}</strong></li>
         {% endfor %}
       </ul>
     {% else %}
@@ -38,7 +32,7 @@
   {% if link %}
     <hr>
     <h3>📁 전체 사진 보기 ({{ event }})</h3>
-    <iframe src="{{ link }}" width="100%" height="700px" frameborder="0"></iframe>
+    <p><a href="{{ link }}" target="_blank">➡️ 원드라이브에서 전체 사진 보기</a></p>
   {% endif %}
 
   <p><a href="/">🔙 다른 배번 검색하기</a></p>
