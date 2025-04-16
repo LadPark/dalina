@@ -13,9 +13,13 @@
       padding: 0;
       margin: 0;
       width: 200px;
+      top: 100%;
+      left: 0;
+      z-index: 1000;
     }
     #suggestions li {
       padding: 5px;
+      cursor: pointer;
     }
     #suggestions li:hover {
       background: #f0f0f0;
@@ -34,8 +38,10 @@
     </select>
 
     <label for="bib">배번:</label>
-    <input type="text" name="bib" id="bib" placeholder="배번을 입력하세요" autocomplete="off" required>
-    <ul id="suggestions"></ul>
+    <div style="position: relative;">
+      <input type="text" name="bib" id="bib" placeholder="배번을 입력하세요" autocomplete="off" required style="width: 200px;">
+      <ul id="suggestions"></ul>
+    </div>
 
     <button type="submit">검색</button>
   </form>
@@ -56,7 +62,6 @@
       matched.forEach(bib => {
         const li = document.createElement("li");
         li.textContent = bib;
-        li.style.cursor = "pointer";
         li.onclick = () => {
           input.value = bib;
           list.innerHTML = "";
