@@ -3,25 +3,23 @@
 <head>
   <title>달리나 - 마라톤 사진 찾기</title>
   <style>
-    #suggestions {
-      border: 1px solid #ccc;
-      max-height: 150px;
-      overflow-y: auto;
+    .suggest-box {
       position: absolute;
       background: white;
       list-style: none;
       padding: 0;
       margin: 0;
       width: 200px;
-      top: 100%;
-      left: 0;
-      z-index: 1000;
+      max-height: 150px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      z-index: 999;
     }
-    #suggestions li {
+    .suggest-box li {
       padding: 5px;
       cursor: pointer;
     }
-    #suggestions li:hover {
+    .suggest-box li:hover {
       background: #f0f0f0;
     }
   </style>
@@ -38,9 +36,9 @@
     </select>
 
     <label for="bib">배번:</label>
-    <div style="position: relative;">
+    <div style="position: relative; display: inline-block;">
       <input type="text" name="bib" id="bib" placeholder="배번을 입력하세요" autocomplete="off" required style="width: 200px;">
-      <ul id="suggestions"></ul>
+      <ul id="suggestions" class="suggest-box"></ul>
     </div>
 
     <button type="submit">검색</button>
