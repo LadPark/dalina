@@ -5,32 +5,34 @@
   <style>
     body {
       font-family: sans-serif;
-      background-image: url("/static/result_bg.png");
+      background: url('/static/result_bg.png') no-repeat center center fixed;
       background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      padding: 2rem;
-      color: #000;
+      margin: 0;
+      padding: 20px;
+      color: #fff;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
     }
     .results {
-      background: rgba(255, 255, 255, 0.9);
-      padding: 1rem;
+      margin-top: 20px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 20px;
       border-radius: 8px;
-      max-width: 600px;
-      margin: 0 auto;
     }
     .results li {
       margin-bottom: 10px;
     }
-    h1, h3, p {
-      text-align: center;
+    a {
+      color: #87CEEB;
+    }
+    a:hover {
+      color: #fff;
     }
   </style>
 </head>
 <body>
-  <div class="results">
-    <h1>📸 {{ event }} / 배번: {{ keyword }} 검색 결과</h1>
+  <h1>📸 {{ event }} / 배번: {{ keyword }} 검색 결과</h1>
 
+  <div class="results">
     {% if results %}
       <ul>
         {% for row in results %}
@@ -40,14 +42,14 @@
     {% else %}
       <p>해당 배번의 사진이 없습니다.</p>
     {% endif %}
-
-    {% if link %}
-      <hr>
-      <h3>📁 전체 사진 보기 ({{ event }})</h3>
-      <p><a href="{{ link }}" target="_blank">➡️ 원드라이브에서 전체 사진 보기</a></p>
-    {% endif %}
-
-    <p><a href="/">🔙 다른 배번 검색하기</a></p>
   </div>
+
+  {% if link %}
+    <hr>
+    <h3>📁 전체 사진 보기 ({{ event }})</h3>
+    <p><a href="{{ link }}" target="_blank">➡️ 원드라이브에서 전체 사진 보기</a></p>
+  {% endif %}
+
+  <p><a href="/">🔙 다른 배번 검색하기</a></p>
 </body>
 </html>
