@@ -4,102 +4,61 @@
   <title>달리나 - 마라톤 사진 찾기</title>
   <style>
     body {
-      margin: 0;
-      padding: 0;
-      background: url("/static/bg.png") no-repeat center center fixed;
-      background-size: cover;
       font-family: sans-serif;
-      color: #fff;
-      text-align: center;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
+      font-size: 1.5em;
     }
-
-    .container {
-      background: rgba(0, 0, 0, 0.5);
-      padding: 40px;
-      border-radius: 12px;
-      display: inline-block;
-    }
-
-    .logo {
-      width: 200px;
-      margin-bottom: 20px;
-    }
-
-    select, input, button {
-      padding: 10px;
-      margin: 10px;
-      font-size: 1.1rem;
-      border: none;
-      border-radius: 6px;
-    }
-
-    input {
-      width: 220px;
-    }
-
-    button {
-      background-color: #007BFF;
-      color: white;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #0056b3;
-    }
-
-    #suggestions {
+    .suggest-box {
+      position: absolute;
       background: white;
-      color: black;
       list-style: none;
       padding: 0;
       margin: 0;
-      max-height: 150px;
+      width: 300px;
+      max-height: 225px;
       overflow-y: auto;
-      position: absolute;
-      width: 220px;
-      z-index: 1000;
       border: 1px solid #ccc;
+      z-index: 999;
     }
-
-    #suggestions li {
-      padding: 5px;
+    .suggest-box li {
+      padding: 7px;
       cursor: pointer;
     }
-
-    #suggestions li:hover {
-      background: #eee;
+    .suggest-box li:hover {
+      background: #f0f0f0;
+    }
+    form {
+      margin-top: 30px;
+    }
+    input[type="text"], select {
+      font-size: 1em;
+      padding: 10px;
+      width: 300px;
+    }
+    button {
+      font-size: 1em;
+      padding: 10px 20px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <img src="/static/logo_white.png" alt="달리나 로고" class="logo">
-    <h2>대회명과 배번으로 사진을 찾아보세요</h2>
+  <h1>📷 달리나: 배번으로 마라톤 사진 찾기</h1>
 
-    <form action="/search" method="post">
-      <div>
-        <select name="event" id="event" required>
-          {% for e in events %}
-            <option value="{{ e }}">{{ e }}</option>
-          {% endfor %}
-        </select>
-      </div>
+  <form action="/search" method="post">
+    <label for="event">대회 선택:</label>
+    <select name="event" id="event" required>
+      {% for e in events %}
+        <option value="{{ e }}">{{ e }}</option>
+      {% endfor %}
+    </select>
 
-      <div style="position: relative; display: inline-block;">
-        <input type="text" name="bib" id="bib" placeholder="배번을 입력하세요" autocomplete="off" required>
-        <ul id="suggestions"></ul>
-      </div>
+    <label for="bib">배번:</label>
+    <div style="position: relative; display: inline-block;">
+      <input type="text" name="bib" id="bib" placeholder="배번을 입력하세요" autocomplete="off" required>
+      <ul id="suggestions" class="suggest-box"></ul>
+    </div>
 
-      <div>
-        <button type="submit">검색</button>
-      </div>
-    </form>
-  </div>
+    <button type="submit">검색</button>
+  </form>
 
   <script>
     const suggestions = {{ suggestions | tojson }};
