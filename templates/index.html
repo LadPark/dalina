@@ -1,15 +1,42 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
+  <meta charset="UTF-8">
   <title>달리나 - 마라톤 사진 찾기</title>
   <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f7f7f7;
+    }
+    h1 {
+      font-size: 36px;
+      margin-bottom: 20px;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    select, input, button {
+      padding: 10px;
+      font-size: 18px;
+      width: 300px;
+      box-sizing: border-box;
+    }
     .suggest-box {
       position: absolute;
       background: white;
       list-style: none;
       padding: 0;
       margin: 0;
-      width: 200px;
+      width: 300px;
       max-height: 150px;
       overflow-y: auto;
       border: 1px solid #ccc;
@@ -22,22 +49,25 @@
     .suggest-box li:hover {
       background: #f0f0f0;
     }
+    .input-group {
+      position: relative;
+      width: 300px;
+    }
   </style>
 </head>
 <body>
-  <h1>📷 달리나: 배번으로 마라톤 사진 찾기</h1>
+  <h1>📷 달리나</h1>
+  <p>내 배번으로 마라톤 사진을 찾아보세요</p>
 
   <form action="/search" method="post">
-    <label for="event">대회 선택:</label>
     <select name="event" id="event" required>
       {% for e in events %}
         <option value="{{ e }}">{{ e }}</option>
       {% endfor %}
     </select>
 
-    <label for="bib">배번:</label>
-    <div style="position: relative; display: inline-block;">
-      <input type="text" name="bib" id="bib" placeholder="배번을 입력하세요" autocomplete="off" required style="width: 200px;">
+    <div class="input-group">
+      <input type="text" name="bib" id="bib" placeholder="배번을 입력하세요" autocomplete="off" required>
       <ul id="suggestions" class="suggest-box"></ul>
     </div>
 
