@@ -5,58 +5,66 @@
   <style>
     body {
       font-family: sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
+      background-image: url("/static/result_bg.png");
+      background-size: cover;
+      background-position: center;
       margin: 0;
-      padding: 20px;
+      padding: 0;
     }
-    h1, h3, p {
-      text-align: center;
+    .container {
+      max-width: 600px;
+      margin: 100px auto;
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
     }
     .results {
       margin-top: 20px;
-      text-align: left;
-      max-width: 600px;
-    }
-    .results ul {
-      padding: 0;
     }
     .results li {
       margin-bottom: 10px;
     }
-    a {
-      color: #0066cc;
-      text-decoration: none;
+    h1, h3 {
+      text-align: center;
     }
-    a:hover {
-      text-decoration: underline;
+    a.button {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #0066cc;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <h1>📸 {{ event }} / 배번: {{ keyword }} 검색 결과</h1>
+  <div class="container">
+    <h1>📸 {{ event }} / 배번: {{ keyword }} 검색 결과</h1>
 
-  <div class="results">
-    {% if results %}
-      <ul>
-        {% for row in results %}
-          <li><strong>{{ row[1] }}</strong></li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <p>해당 배번의 사진이 없습니다.</p>
+    <div class="results">
+      {% if results %}
+        <ul>
+          {% for row in results %}
+            <li><strong>{{ row[1] }}</strong></li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p>해당 배번의 사진이 없습니다.</p>
+      {% endif %}
+    </div>
+
+    {% if link %}
+      <hr>
+      <h3>📁 전체 사진 보기 ({{ event }})</h3>
+      <p><a href="{{ link }}" target="_blank">➡️ 원드라이브에서 전체 사진 보기</a></p>
     {% endif %}
+
+    <div style="text-align: center;">
+      <a href="/" class="button">🔍 다른 배번 검색하기</a>
+    </div>
   </div>
-
-  {% if link %}
-    <hr>
-    <h3>📁 전체 사진 보기 ({{ event }})</h3>
-    <p><a href="{{ link }}" target="_blank">➡️ 원드라이브에서 전체 사진 보기</a></p>
-  {% endif %}
-
-  <p><a href="/">🔙 다른 배번 검색하기</a></p>
 </body>
 </html>
