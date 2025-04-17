@@ -4,56 +4,85 @@
   <title>달리나 - 마라톤 사진 찾기</title>
   <style>
     body {
-      font-family: sans-serif;
-      background: url('/static/bg.png') no-repeat center center fixed;
-      background-size: cover;
       margin: 0;
       padding: 0;
+      background: url("/static/bg.png") no-repeat center center fixed;
+      background-size: cover;
+      font-family: sans-serif;
+      color: #fff;
       text-align: center;
-      color: #333;
-    }
-    .container {
+      height: 100vh;
       display: flex;
-      flex-direction: column;
       justify-content: center;
       align-items: center;
-      height: 100vh;
-      backdrop-filter: brightness(1) blur(0.3px);
+      flex-direction: column;
     }
+
+    .container {
+      background: rgba(0, 0, 0, 0.5);
+      padding: 40px;
+      border-radius: 12px;
+      display: inline-block;
+    }
+
     .logo {
-      max-width: 300px;
-      margin-bottom: 30px;
+      width: 200px;
+      margin-bottom: 20px;
     }
-    .form-group {
-      margin: 10px 0;
+
+    select, input, button {
+      padding: 10px;
+      margin: 10px;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 6px;
     }
+
+    input {
+      width: 220px;
+    }
+
+    button {
+      background-color: #007BFF;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
     #suggestions {
-      position: absolute;
       background: white;
+      color: black;
       list-style: none;
       padding: 0;
       margin: 0;
-      width: 200px;
       max-height: 150px;
       overflow-y: auto;
+      position: absolute;
+      width: 220px;
+      z-index: 1000;
       border: 1px solid #ccc;
-      z-index: 999;
     }
+
     #suggestions li {
       padding: 5px;
       cursor: pointer;
     }
+
     #suggestions li:hover {
-      background: #f0f0f0;
+      background: #eee;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <img src="/static/logo.svg" alt="달리나 로고" class="logo">
+    <h2>당신의 배번으로 마라톤 사진을 찾아보세요</h2>
+
     <form action="/search" method="post">
-      <div class="form-group">
-        <label for="event">대회 선택:</label>
+      <div>
         <select name="event" id="event" required>
           {% for e in events %}
             <option value="{{ e }}">{{ e }}</option>
@@ -61,13 +90,12 @@
         </select>
       </div>
 
-      <div class="form-group" style="position: relative; display: inline-block;">
-        <label for="bib">배번:</label><br>
-        <input type="text" name="bib" id="bib" placeholder="배번을 입력하세요" autocomplete="off" required style="width: 200px;">
+      <div style="position: relative; display: inline-block;">
+        <input type="text" name="bib" id="bib" placeholder="배번을 입력하세요" autocomplete="off" required>
         <ul id="suggestions"></ul>
       </div>
 
-      <div class="form-group">
+      <div>
         <button type="submit">검색</button>
       </div>
     </form>
