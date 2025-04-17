@@ -1,78 +1,77 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html>
 <head>
-  <meta charset="UTF-8">
   <title>달리나 - 마라톤 사진 찾기</title>
   <style>
     body {
       font-family: sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
+      background: url('/static/bg.png') no-repeat center center fixed;
+      background-size: cover;
       margin: 0;
-      background-color: #f7f7f7;
+      padding: 0;
+      text-align: center;
+      color: #333;
     }
-    h1 {
-      font-size: 36px;
-      margin-bottom: 20px;
-    }
-    form {
+    .container {
       display: flex;
       flex-direction: column;
+      justify-content: center;
       align-items: center;
-      gap: 10px;
+      height: 100vh;
+      backdrop-filter: brightness(1) blur(0.3px);
     }
-    select, input, button {
-      padding: 10px;
-      font-size: 18px;
-      width: 300px;
-      box-sizing: border-box;
+    .logo {
+      max-width: 300px;
+      margin-bottom: 30px;
     }
-    .suggest-box {
+    .form-group {
+      margin: 10px 0;
+    }
+    #suggestions {
       position: absolute;
       background: white;
       list-style: none;
       padding: 0;
       margin: 0;
-      width: 300px;
+      width: 200px;
       max-height: 150px;
       overflow-y: auto;
       border: 1px solid #ccc;
       z-index: 999;
     }
-    .suggest-box li {
+    #suggestions li {
       padding: 5px;
       cursor: pointer;
     }
-    .suggest-box li:hover {
+    #suggestions li:hover {
       background: #f0f0f0;
-    }
-    .input-group {
-      position: relative;
-      width: 300px;
     }
   </style>
 </head>
 <body>
-  <h1>📷 달리나</h1>
-  <p>내 배번으로 마라톤 사진을 찾아보세요</p>
+  <div class="container">
+    <img src="/static/logo.svg" alt="달리나 로고" class="logo">
+    <form action="/search" method="post">
+      <div class="form-group">
+        <label for="event">대회 선택:</label>
+        <select name="event" id="event" required>
+          {% for e in events %}
+            <option value="{{ e }}">{{ e }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-  <form action="/search" method="post">
-    <select name="event" id="event" required>
-      {% for e in events %}
-        <option value="{{ e }}">{{ e }}</option>
-      {% endfor %}
-    </select>
+      <div class="form-group" style="position: relative; display: inline-block;">
+        <label for="bib">배번:</label><br>
+        <input type="text" name="bib" id="bib" placeholder="배번을 입력하세요" autocomplete="off" required style="width: 200px;">
+        <ul id="suggestions"></ul>
+      </div>
 
-    <div class="input-group">
-      <input type="text" name="bib" id="bib" placeholder="배번을 입력하세요" autocomplete="off" required>
-      <ul id="suggestions" class="suggest-box"></ul>
-    </div>
-
-    <button type="submit">검색</button>
-  </form>
+      <div class="form-group">
+        <button type="submit">검색</button>
+      </div>
+    </form>
+  </div>
 
   <script>
     const suggestions = {{ suggestions | tojson }};
