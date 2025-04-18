@@ -62,6 +62,9 @@
     .post-container a:hover {
       text-decoration: underline;
     }
+    .post-container h2 {
+      text-align: center;
+    }
 
     /* 로고 */
     .logo {
@@ -156,7 +159,7 @@
 
   <!-- 게시물 및 공지사항 링크 섹션 -->
   <div class="post-container">
-    <h2>📢 공지 및 이용 안내</h2>
+    <h2>공지 및 이용 안내</h2>
     <ul>
       {% for post in posts %}
         <li>
