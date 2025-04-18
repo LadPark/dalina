@@ -69,13 +69,7 @@
       margin-bottom: 10px;
     }
 
-    /* 제목 스타일 */
-    h1 {
-      font-size: 1.5rem;
-      margin: 0 0 20px;
-      text-align: center;
-    }
-
+    /* form 및 요소 스타일 */
     form {
       width: 100%;
       text-align: center;
@@ -162,13 +156,11 @@
 
   <!-- 게시물 및 공지사항 링크 섹션 -->
   <div class="post-container">
-    <h2> 공지 및 이용 안내</h2>
+    <h2>📢 공지 및 이용 안내</h2>
     <ul>
       {% for post in posts %}
         <li>
-          <a href="{{ url_for('static', filename='posts/' + post.filename) }}" target="_blank">
-            {{ post.title }}
-          </a>
+          <a href="{{ url_for('post', filename=post.filename) }}">{{ post.title }}</a>
         </li>
       {% endfor %}
     </ul>
