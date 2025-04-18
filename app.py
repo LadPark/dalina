@@ -1,9 +1,8 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, abort
 import pandas as pd
 import os
 
 app = Flask(__name__)
-
 data_path = "data"
 
 @app.route("/")
@@ -31,9 +30,9 @@ def index():
             if not fname.lower().endswith(".txt"):
                 continue
             full_path = os.path.join(posts_dir, fname)
-            # 첫 줄을 제목으로 사용
             with open(full_path, encoding="utf-8") as f:
-                title = f.readline().strip()
+                raw_title = f.readline()
+                title = raw_title.lstrip("\ufeff").strip()
             posts.append({
                 "filename": fname,
                 "title": title
@@ -58,8 +57,7 @@ def search():
             keyword=keyword,
             results=[],
             event=event,
-            link=None,
-            suggestions=[],
+            link=None
         )
 
     df = pd.read_csv(csv_path, encoding="utf-8")
@@ -67,22 +65,37 @@ def search():
     results = matches.values.tolist()
 
     # 갤러리 링크
-    link_path = os.path.join(data_path, event, "onedrive_link.txt")
     gallery_link = None
+    link_path = os.path.join(data_path, event, "onedrive_link.txt")
     if os.path.exists(link_path):
         with open(link_path, encoding="utf-8") as f:
             gallery_link = f.read().strip()
-
-    # 자동완성용 배번 리스트 업데이트
-    bib_list = df["배번"].dropna().unique().tolist()
 
     return render_template(
         "results.html",
         keyword=keyword,
         results=results,
         event=event,
-        link=gallery_link,
-        suggestions=bib_list
+        link=gallery_link
+    )
+
+@app.route("/post/<filename>")
+def post(filename):
+    posts_dir = os.path.join(app.static_folder, "posts")
+    # 유효한 .txt 파일인지 확인
+    if filename not in os.listdir(posts_dir) or not filename.lower().endswith(".txt"):
+        abort(404)
+
+    full_path = os.path.join(posts_dir, filename)
+    with open(full_path, encoding="utf-8") as f:
+        raw_title = f.readline()
+        title = raw_title.lstrip("\ufeff").strip()
+        content = f.read().strip()
+
+    return render_template(
+        "post.html",
+        title=title,
+        content=content
     )
 
 if __name__ == "__main__":
