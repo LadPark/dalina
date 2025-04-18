@@ -7,7 +7,7 @@ data_path = "data"
 
 @app.route("/")
 def index():
-    # 이벤트 목록(드롭다운)
+    # 이벤트 목록 (data/<event> 폴더가 있는 경우)
     events = [
         d for d in os.listdir(data_path)
         if os.path.isdir(os.path.join(data_path, d))
@@ -64,7 +64,7 @@ def search():
     matches = df[df["배번"].str.contains(keyword, na=False)]
     results = matches.values.tolist()
 
-    # 갤러리 링크
+    # 갤러리 링크 (onedrive_link.txt)
     gallery_link = None
     link_path = os.path.join(data_path, event, "onedrive_link.txt")
     if os.path.exists(link_path):
@@ -81,21 +81,32 @@ def search():
 
 @app.route("/post/<filename>")
 def post(filename):
+    # posts 디렉터리 경로
     posts_dir = os.path.join(app.static_folder, "posts")
     # 유효한 .txt 파일인지 확인
     if filename not in os.listdir(posts_dir) or not filename.lower().endswith(".txt"):
         abort(404)
 
+    # 텍스트 파일 읽기 (첫 줄: 제목, 나머지: 본문)
     full_path = os.path.join(posts_dir, filename)
     with open(full_path, encoding="utf-8") as f:
         raw_title = f.readline()
         title = raw_title.lstrip("\ufeff").strip()
         content = f.read().strip()
 
+    # 동일 이름의 이미지 파일 탐색 (.png, .jpg, .jpeg, .gif)
+    base, _ = os.path.splitext(filename)
+    images = []
+    for ext in ("png", "jpg", "jpeg", "gif"):
+        img_name = f"{base}.{ext}"
+        if os.path.exists(os.path.join(posts_dir, img_name)):
+            images.append(img_name)
+
     return render_template(
         "post.html",
         title=title,
-        content=content
+        content=content,
+        images=images
     )
 
 if __name__ == "__main__":
