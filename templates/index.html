@@ -14,11 +14,11 @@
       background-size: cover;
     }
 
-    /* 화면 중앙 9:16 비율 기본 컨테이너 */
+    /* 화면 중앙 1:1 비율 기본 컨테이너 */
     .container {
-      width: 90vw;
+      width: 70vw;
       max-width: 400px;
-      aspect-ratio: 9/16;
+      aspect-ratio: 10 /10;
       margin: 20px auto 0;
       display: flex;
       flex-direction: column;
@@ -27,7 +27,7 @@
       background-color: rgba(255, 255, 255, 0.85);
       border-radius: 16px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-      padding: 20px;
+      padding: 5px;
     }
 
     /* 게시물 링크 컨테이너 */
@@ -38,7 +38,7 @@
       background-color: rgba(255, 255, 255, 0.85);
       border-radius: 16px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-      padding: 20px;
+      padding: 5px;
       text-align: left;
     }
 
@@ -141,8 +141,7 @@
   <div class="container">
     <!-- 로고 삽입 -->
     <img src="/static/logo.svg" alt="Dalina Logo" class="logo">
-    <h1>📷 달리나: 배번으로 마라톤 사진 찾기</h1>
-
+  
     <form action="/search" method="post">
       <label for="event">대회 선택</label>
       <select name="event" id="event" required>
