@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, abort
 import pandas as pd
 import os
 import textwrap
+inport re
 
 app = Flask(__name__)
 data_path = "data"
@@ -80,36 +81,32 @@ def search():
         link=gallery_link
     )
 
+import re
+
 @app.route("/post/<filename>")
 def post(filename):
-    # posts 디렉터리 경로
     posts_dir = os.path.join(app.static_folder, "posts")
-    # 유효한 .txt 파일인지 확인
     if filename not in os.listdir(posts_dir) or not filename.lower().endswith(".txt"):
         abort(404)
 
-    # 텍스트 파일 읽기 (첫 줄: 제목, 나머지: 본문)
     full_path = os.path.join(posts_dir, filename)
     with open(full_path, encoding="utf-8") as f:
-        # 첫 줄: 제목
+        # 첫 줄 = 제목
         raw_title = f.readline()
         title = raw_title.lstrip("\ufeff").strip()
-        # 본문 전체 읽기
-        raw_content = f.read()
-        # 1) 공통 들여쓰기 제거
-        dedented = textwrap.dedent(raw_content)
-        # 2) 각 줄의 모든 앞 공백(스페이스·탭) 제거
-        lines = [line.lstrip() for line in dedented.splitlines()]
-        # 3) 다시 합치고 양쪽 여백 정리
-        content = "\n".join(lines).strip()
 
-    # 동일 이름의 이미지 파일 탐색
+        # 나머지 = 본문
+        raw_content = f.read()
+        # 모든 줄의 선두 공백(space/tab) 제거 (MULTILINE 모드)
+        content = re.sub(r'(?m)^[ \t]+', '', raw_content).strip()
+
+    # 이미지 찾는 로직은 그대로…
     base, _ = os.path.splitext(filename)
     images = []
-    for ext in ("png", "jpg", "jpeg", "gif"):
-        img_name = f"{base}.{ext}"
-        if os.path.exists(os.path.join(posts_dir, img_name)):
-            images.append(img_name)
+    for ext in ("png","jpg","jpeg","gif"):
+        img = f"{base}.{ext}"
+        if os.path.exists(os.path.join(posts_dir, img)):
+            images.append(img)
 
     return render_template(
         "post.html",
@@ -117,6 +114,7 @@ def post(filename):
         content=content,
         images=images
     )
+
 
 
 if __name__ == "__main__":
