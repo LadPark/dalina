@@ -6,8 +6,7 @@
   <title>{{ title }} – 달리나</title>
   <style>
     body {
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
       font-family: sans-serif;
       background: url('/static/bg.png') no-repeat center center fixed;
       background-size: cover;
@@ -15,14 +14,13 @@
     .container {
       max-width: 600px;
       margin: 100px auto;
-      background-color: rgba(255, 255, 255, 0.9);
+      background-color: rgba(255,255,255,0.9);
       padding: 30px;
       border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
-      text-align: center
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+      text-align: center;
     }
     h1 {
-      text-align: center;
       font-size: 1.5rem;
       margin-bottom: 20px;
     }
@@ -30,6 +28,15 @@
       font-size: 1rem;
       line-height: 1.6;
       white-space: pre-wrap;
+      text-align: left;
+      margin-bottom: 20px;
+    }
+    .post-image {
+      display: block;
+      margin: 0 auto 20px;
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
     }
     .button {
       display: inline-block;
@@ -39,7 +46,6 @@
       color: white;
       text-decoration: none;
       border-radius: 5px;
-      text-align: center;
     }
     .button:hover {
       background-color: #0056b3;
@@ -49,12 +55,23 @@
 <body>
   <div class="container">
     <h1>{{ title }}</h1>
+
+    <!-- 본문 텍스트 -->
     <div class="content">
-      {{ content | urlize | safe }}
+      {{ content | urlize | safe }}
     </div>
-    <div style="text-align:center;">
-      <a href="/" class="button">🔙 돌아가기</a>
-    </div>
+
+    <!-- .txt 파일 이름과 같은 이미지들(예: QR 코드) -->
+    {% for img in images %}
+      <img
+        src="{{ url_for('static', filename='posts/' + img) }}"
+        alt="{{ title }} 이미지"
+        class="post-image"
+      >
+    {% endfor %}
+
+    <!-- 돌아가기 버튼 -->
+    <a href="/" class="button">🔙 돌아가기</a>
   </div>
 </body>
 </html>
