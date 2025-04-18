@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, abort
 import pandas as pd
 import os
+import textwrap
 
 app = Flask(__name__)
 data_path = "data"
@@ -92,7 +93,8 @@ def post(filename):
     with open(full_path, encoding="utf-8") as f:
         raw_title = f.readline()
         title = raw_title.lstrip("\ufeff").strip()
-        content = f.read().strip()
+        raw_content = f.read()
+        content = textwrap.dedent(raw_content).strip()
 
     # 동일 이름의 이미지 파일 탐색 (.png, .jpg, .jpeg, .gif)
     base, _ = os.path.splitext(filename)
