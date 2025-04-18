@@ -8,8 +8,13 @@ data_path = "data"
 
 @app.route("/")
 def index():
-    events = [d for d in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, d))]
+    # 이벤트 목록(드롭다운)
+    events = [
+        d for d in os.listdir(data_path)
+        if os.path.isdir(os.path.join(data_path, d))
+    ]
 
+    # 기본 자동완성용 배번 리스트
     suggestions = []
     if events:
         default_event = events[0]
@@ -18,7 +23,28 @@ def index():
             df = pd.read_csv(csv_path, encoding="utf-8")
             suggestions = df["배번"].dropna().unique().tolist()
 
-    return render_template("index.html", events=events, suggestions=suggestions)
+    # static/posts 폴더에서 .txt 파일을 읽어 게시물 목록 생성
+    posts = []
+    posts_dir = os.path.join(app.static_folder, "posts")
+    if os.path.isdir(posts_dir):
+        for fname in sorted(os.listdir(posts_dir)):
+            if not fname.lower().endswith(".txt"):
+                continue
+            full_path = os.path.join(posts_dir, fname)
+            # 첫 줄을 제목으로 사용
+            with open(full_path, encoding="utf-8") as f:
+                title = f.readline().strip()
+            posts.append({
+                "filename": fname,
+                "title": title
+            })
+
+    return render_template(
+        "index.html",
+        events=events,
+        suggestions=suggestions,
+        posts=posts
+    )
 
 @app.route("/search", methods=["POST"])
 def search():
@@ -27,17 +53,37 @@ def search():
     csv_path = os.path.join(data_path, event, "results.csv")
 
     if not os.path.exists(csv_path):
-        return render_template("results.html", keyword=keyword, results=[], event=event, link=None, suggestions=[])
+        return render_template(
+            "results.html",
+            keyword=keyword,
+            results=[],
+            event=event,
+            link=None,
+            suggestions=[],
+        )
 
-    df = pd.read_csv(csv_path)
+    df = pd.read_csv(csv_path, encoding="utf-8")
     matches = df[df["배번"].str.contains(keyword, na=False)]
+    results = matches.values.tolist()
 
+    # 갤러리 링크
     link_path = os.path.join(data_path, event, "onedrive_link.txt")
-    gallery_link = open(link_path).read().strip() if os.path.exists(link_path) else None
+    gallery_link = None
+    if os.path.exists(link_path):
+        with open(link_path, encoding="utf-8") as f:
+            gallery_link = f.read().strip()
 
+    # 자동완성용 배번 리스트 업데이트
     bib_list = df["배번"].dropna().unique().tolist()
 
-    return render_template("results.html", keyword=keyword, results=matches.values.tolist(), event=event, link=gallery_link, suggestions=bib_list)
+    return render_template(
+        "results.html",
+        keyword=keyword,
+        results=results,
+        event=event,
+        link=gallery_link,
+        suggestions=bib_list
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)
