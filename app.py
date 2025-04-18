@@ -1,8 +1,6 @@
 from flask import Flask, render_template, request, abort
 import pandas as pd
 import os
-import re
-import textwrap
 
 app = Flask(__name__)
 data_path = "data"
@@ -59,45 +57,53 @@ def search():
             keyword=keyword,
             results=[],
             event=event,
-            link=None
+            link=None,
+            suggestions=[]
         )
 
     df = pd.read_csv(csv_path, encoding="utf-8")
     matches = df[df["배번"].str.contains(keyword, na=False)]
     results = matches.values.tolist()
 
-    # 갤러리 링크
+    # 갤러리 링크 (onedrive_link.txt)
     gallery_link = None
     link_path = os.path.join(data_path, event, "onedrive_link.txt")
     if os.path.exists(link_path):
         with open(link_path, encoding="utf-8") as f:
             gallery_link = f.read().strip()
 
+    # 검색 후 자동완성 리스트
+    suggestions = df["배번"].dropna().unique().tolist()
+
     return render_template(
         "results.html",
         keyword=keyword,
         results=results,
         event=event,
-        link=gallery_link
+        link=gallery_link,
+        suggestions=suggestions
     )
 
 @app.route("/post/<filename>")
 def post(filename):
     posts_dir = os.path.join(app.static_folder, "posts")
+    # 유효한 .txt 파일인지 확인
     if filename not in os.listdir(posts_dir) or not filename.lower().endswith(".txt"):
         abort(404)
 
     full_path = os.path.join(posts_dir, filename)
     with open(full_path, encoding="utf-8") as f:
-        # 제목
+        # 첫 줄: 제목
         raw_title = f.readline()
         title = raw_title.lstrip("\ufeff").strip()
-        # 본문 읽기
+        # 나머지: 본문 전체 읽기
         raw_content = f.read()
-        # 모든 줄 앞의 탭/스페이스 제거
-        content = re.sub(r'(?m)^[ \t]+', '', raw_content).strip()
+        # 모든 줄의 앞뒤 공백 제거
+        lines = raw_content.splitlines()
+        cleaned = [ln.strip() for ln in lines]
+        content = "\n".join(cleaned).strip()
 
-    # 대응하는 이미지(.png/.jpg 등) 수집
+    # 동일 이름의 이미지(.png/.jpg 등) 탐색
     base, _ = os.path.splitext(filename)
     images = []
     for ext in ("png", "jpg", "jpeg", "gif"):
