@@ -5,57 +5,80 @@
   <style>
     body {
       font-family: sans-serif;
-      font-size: 1.5em;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: #f4f4f4 url('/static/bg.png') center/cover no-repeat;
+      text-align: center;
     }
-    .suggest-box {
+    form {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    }
+    select, input[type="text"] {
+      font-size: 16px;
+      padding: 8px;
+      margin: 10px;
+      width: 250px;
+    }
+    button {
+      font-size: 16px;
+      padding: 10px 20px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #suggestions {
       position: absolute;
       background: white;
       list-style: none;
       padding: 0;
       margin: 0;
-      width: 300px;
-      max-height: 225px;
+      width: 250px;
+      max-height: 150px;
       overflow-y: auto;
       border: 1px solid #ccc;
       z-index: 999;
     }
-    .suggest-box li {
-      padding: 7px;
+    #suggestions li {
+      padding: 5px;
       cursor: pointer;
     }
-    .suggest-box li:hover {
+    #suggestions li:hover {
       background: #f0f0f0;
     }
-    form {
-      margin-top: 30px;
+    .logo {
+      margin-bottom: 20px;
     }
-    input[type="text"], select {
-      font-size: 1em;
-      padding: 10px;
-      width: 300px;
-    }
-    button {
-      font-size: 1em;
-      padding: 10px 20px;
+    .logo img {
+      max-width: 300px;
     }
   </style>
 </head>
 <body>
-  <h1>📷 달리나: 배번으로 마라톤 사진 찾기</h1>
-
+  <div class="logo">
+    <img src="/static/logo.svg" alt="달리나 로고">
+  </div>
   <form action="/search" method="post">
     <label for="event">대회 선택:</label>
     <select name="event" id="event" required>
       {% for e in events %}
         <option value="{{ e }}">{{ e }}</option>
       {% endfor %}
-    </select>
+    </select><br>
 
-    <label for="bib">배번:</label>
+    <label for="bib">배번:</label><br>
     <div style="position: relative; display: inline-block;">
       <input type="text" name="bib" id="bib" placeholder="배번을 입력하세요" autocomplete="off" required>
-      <ul id="suggestions" class="suggest-box"></ul>
-    </div>
+      <ul id="suggestions"></ul>
+    </div><br>
 
     <button type="submit">검색</button>
   </form>
