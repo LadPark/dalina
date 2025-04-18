@@ -1,21 +1,21 @@
 from flask import Flask, render_template, request, abort
 import pandas as pd
 import os
+import re
 import textwrap
-inport re
 
 app = Flask(__name__)
 data_path = "data"
 
 @app.route("/")
 def index():
-    # 이벤트 목록 (data/<event> 폴더가 있는 경우)
+    # 이벤트 목록 (data/<event> 폴더)
     events = [
         d for d in os.listdir(data_path)
         if os.path.isdir(os.path.join(data_path, d))
     ]
 
-    # 기본 자동완성용 배번 리스트
+    # 자동완성용 배번 리스트
     suggestions = []
     if events:
         default_event = events[0]
@@ -24,7 +24,7 @@ def index():
             df = pd.read_csv(csv_path, encoding="utf-8")
             suggestions = df["배번"].dropna().unique().tolist()
 
-    # static/posts 폴더에서 .txt 파일을 읽어 게시물 목록 생성
+    # 게시물 목록 (static/posts/*.txt)
     posts = []
     posts_dir = os.path.join(app.static_folder, "posts")
     if os.path.isdir(posts_dir):
@@ -66,7 +66,7 @@ def search():
     matches = df[df["배번"].str.contains(keyword, na=False)]
     results = matches.values.tolist()
 
-    # 갤러리 링크 (onedrive_link.txt)
+    # 갤러리 링크
     gallery_link = None
     link_path = os.path.join(data_path, event, "onedrive_link.txt")
     if os.path.exists(link_path):
@@ -81,8 +81,6 @@ def search():
         link=gallery_link
     )
 
-import re
-
 @app.route("/post/<filename>")
 def post(filename):
     posts_dir = os.path.join(app.static_folder, "posts")
@@ -91,22 +89,21 @@ def post(filename):
 
     full_path = os.path.join(posts_dir, filename)
     with open(full_path, encoding="utf-8") as f:
-        # 첫 줄 = 제목
+        # 제목
         raw_title = f.readline()
         title = raw_title.lstrip("\ufeff").strip()
-
-        # 나머지 = 본문
+        # 본문 읽기
         raw_content = f.read()
-        # 모든 줄의 선두 공백(space/tab) 제거 (MULTILINE 모드)
+        # 모든 줄 앞의 탭/스페이스 제거
         content = re.sub(r'(?m)^[ \t]+', '', raw_content).strip()
 
-    # 이미지 찾는 로직은 그대로…
+    # 대응하는 이미지(.png/.jpg 등) 수집
     base, _ = os.path.splitext(filename)
     images = []
-    for ext in ("png","jpg","jpeg","gif"):
-        img = f"{base}.{ext}"
-        if os.path.exists(os.path.join(posts_dir, img)):
-            images.append(img)
+    for ext in ("png", "jpg", "jpeg", "gif"):
+        img_name = f"{base}.{ext}"
+        if os.path.exists(os.path.join(posts_dir, img_name)):
+            images.append(img_name)
 
     return render_template(
         "post.html",
@@ -114,8 +111,6 @@ def post(filename):
         content=content,
         images=images
     )
-
-
 
 if __name__ == "__main__":
     app.run(debug=True)
