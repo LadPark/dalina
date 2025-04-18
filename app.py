@@ -91,15 +91,19 @@ def post(filename):
     # 텍스트 파일 읽기 (첫 줄: 제목, 나머지: 본문)
     full_path = os.path.join(posts_dir, filename)
     with open(full_path, encoding="utf-8") as f:
+        # 첫 줄: 제목
         raw_title = f.readline()
         title = raw_title.lstrip("\ufeff").strip()
+        # 본문 전체 읽기
         raw_content = f.read()
-        content = textwrap.dedent(raw_content)
-        lines = dedented.splitlines()
-        stripped_lines = [ln.lstrip() for ln in lines]
-        content = "\n".join(stripped_lines).strip()
+        # 1) 공통 들여쓰기 제거
+        dedented = textwrap.dedent(raw_content)
+        # 2) 각 줄의 모든 앞 공백(스페이스·탭) 제거
+        lines = [line.lstrip() for line in dedented.splitlines()]
+        # 3) 다시 합치고 양쪽 여백 정리
+        content = "\n".join(lines).strip()
 
-    # 동일 이름의 이미지 파일 탐색 (.png, .jpg, .jpeg, .gif)
+    # 동일 이름의 이미지 파일 탐색
     base, _ = os.path.splitext(filename)
     images = []
     for ext in ("png", "jpg", "jpeg", "gif"):
@@ -113,6 +117,7 @@ def post(filename):
         content=content,
         images=images
     )
+
 
 if __name__ == "__main__":
     app.run(debug=True)
