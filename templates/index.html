@@ -14,12 +14,12 @@
       background-size: cover;
     }
 
-    /* 화면 중앙 9:16 비율 컨테이너 */
+    /* 화면 중앙 9:16 비율 기본 컨테이너 */
     .container {
-      width: 70vw;
+      width: 90vw;
       max-width: 400px;
-      aspect-ratio: 10 / 10;
-      margin: 10px auto;
+      aspect-ratio: 9/16;
+      margin: 20px auto 0;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -27,7 +27,40 @@
       background-color: rgba(255, 255, 255, 0.85);
       border-radius: 16px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-      padding: 5px;
+      padding: 20px;
+    }
+
+    /* 게시물 링크 컨테이너 */
+    .post-container {
+      width: 90vw;
+      max-width: 400px;
+      margin: 20px auto;
+      background-color: rgba(255, 255, 255, 0.85);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      padding: 20px;
+      text-align: left;
+    }
+
+    .post-container h2 {
+      font-size: 1.25rem;
+      margin-bottom: 12px;
+    }
+    .post-container ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .post-container li {
+      margin-bottom: 10px;
+    }
+    .post-container a {
+      color: #007BFF;
+      text-decoration: none;
+      font-size: 1.1rem;
+    }
+    .post-container a:hover {
+      text-decoration: underline;
     }
 
     /* 로고 */
@@ -40,9 +73,9 @@
     h1 {
       font-size: 1.5rem;
       margin: 0 0 20px;
+      text-align: center;
     }
 
-    /* 폼 블록 레이아웃 */
     form {
       width: 100%;
       text-align: center;
@@ -80,7 +113,6 @@
       background-color: #0056b3;
     }
 
-    /* 자동완성 리스트 */
     .suggest-box {
       position: absolute;
       background: white;
@@ -109,6 +141,7 @@
   <div class="container">
     <!-- 로고 삽입 -->
     <img src="/static/logo.svg" alt="Dalina Logo" class="logo">
+    <h1>📷 달리나: 배번으로 마라톤 사진 찾기</h1>
 
     <form action="/search" method="post">
       <label for="event">대회 선택</label>
@@ -126,6 +159,15 @@
 
       <button type="submit">검색</button>
     </form>
+  </div>
+
+  <!-- 게시물 및 공지사항 링크 섹션 -->
+  <div class="post-container">
+    <h2>📢 공지 및 이용 안내</h2>
+    <ul>
+      <li><a href="/how-to-use">사이트 이용방법</a></li>
+      <li><a href="/notices">공지사항</a></li>
+    </ul>
   </div>
 
   <script>
