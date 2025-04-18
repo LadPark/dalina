@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>검색 결과 - 달리나</title>
   <style>
     body {
@@ -12,37 +14,54 @@
       padding: 0;
     }
     .container {
+      width: 90vw;
       max-width: 600px;
-      margin: 100px auto;
+      margin: 5vh auto;
       background-color: rgba(255, 255, 255, 0.9);
       padding: 30px;
       border-radius: 12px;
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 20px;
     }
     .results {
       margin-top: 20px;
     }
-    .results li {
-      margin-bottom: 10px;
+    .results ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
     }
-    h1, h3 {
-      text-align: center;
+    .results li {
+      margin-bottom: 12px;
+      font-size: 1.1rem;
+    }
+    h3 {
+      font-size: 1.3rem;
+      margin-top: 30px;
     }
     a.button {
       display: inline-block;
       margin-top: 20px;
-      padding: 10px 20px;
+      padding: 12px 24px;
+      font-size: 1.1rem;
       background-color: #0066cc;
       color: white;
       text-decoration: none;
       border-radius: 5px;
-      text-align: center;
+      transition: background-color 0.3s;
+    }
+    a.button:hover {
+      background-color: #0056a3;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1> {{ event }} / 배번: {{ keyword }} 검색 결과</h1>
+    <h1>{{ event }} / 배번: {{ keyword }} 검색 결과</h1>
 
     <div class="results">
       {% if results %}
@@ -62,7 +81,7 @@
       <p><a href="{{ link }}" target="_blank">➡️ 원드라이브에서 전체 사진 보기</a></p>
     {% endif %}
 
-    <div style="text-align: center;">
+    <div>
       <a href="/" class="button">🔍 다른 배번 검색하기</a>
     </div>
   </div>
