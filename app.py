@@ -94,7 +94,10 @@ def post(filename):
         raw_title = f.readline()
         title = raw_title.lstrip("\ufeff").strip()
         raw_content = f.read()
-        content = textwrap.dedent(raw_content).strip()
+        content = textwrap.dedent(raw_content)
+        lines = dedented.splitlines()
+        stripped_lines = [ln.lstrip() for ln in lines]
+        content = "\n".join(stripped_lines).strip()
 
     # 동일 이름의 이미지 파일 탐색 (.png, .jpg, .jpeg, .gif)
     base, _ = os.path.splitext(filename)
