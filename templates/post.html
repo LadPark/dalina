@@ -6,7 +6,8 @@
   <title>{{ title }} – 달리나</title>
   <style>
     body {
-      margin: 0; padding: 0;
+      margin: 0;
+      padding: 0;
       font-family: sans-serif;
       background: url('/static/bg.png') no-repeat center center fixed;
       background-size: cover;
@@ -14,10 +15,10 @@
     .container {
       max-width: 600px;
       margin: 100px auto;
-      background-color: rgba(255,255,255,0.9);
+      background-color: rgba(255, 255, 255, 0.9);
       padding: 30px;
       border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
       text-align: center;
     }
     h1 {
@@ -55,13 +56,8 @@
 <body>
   <div class="container">
     <h1>{{ title }}</h1>
+    <div class="content">{{- content | urlize | safe }}</div>
 
-    <!-- 본문 텍스트 -->
-    <div class="content">
-      {{ content | urlize | safe }}
-    </div>
-
-    <!-- .txt 파일 이름과 같은 이미지들(예: QR 코드) -->
     {% for img in images %}
       <img
         src="{{ url_for('static', filename='posts/' + img) }}"
@@ -70,7 +66,6 @@
       >
     {% endfor %}
 
-    <!-- 돌아가기 버튼 -->
     <a href="/" class="button">🔙 돌아가기</a>
   </div>
 </body>
