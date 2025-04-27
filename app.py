@@ -1,6 +1,8 @@
-from flask import Flask, render_template, request, abort
+from flask import Flask, render_template, request, abort, url_for
 import pandas as pd
 import os
+from datetime import datetime
+from collections import OrderedDict
 
 app = Flask(__name__)
 data_path = "data"
@@ -84,6 +86,51 @@ def search():
         suggestions=suggestions
     )
 
+@app.route("/timeline/<event>")
+def timeline(event):
+    # results.csv 경로 확인
+    csv_path = os.path.join(data_path, event, "results.csv")
+    if not os.path.exists(csv_path):
+        abort(404)
+
+    # CSV 읽기
+    df = pd.read_csv(csv_path, encoding="utf-8")
+
+    # 촬영시각을 datetime 으로 파싱
+    def parse_dt(ts):
+        try:
+            return datetime.strptime(ts, "%Y:%m:%d %H:%M:%S")
+        except:
+            return None
+
+    df["dt"] = df["촬영시각"].map(parse_dt)
+    df = df.dropna(subset=["dt"]).sort_values("dt")
+
+    # 5분 단위로 첫 사진만 추출
+    bins = OrderedDict()
+    for _, row in df.iterrows():
+        dt = row["dt"]
+        floored = dt.replace(minute=(dt.minute // 5) * 5, second=0, microsecond=0)
+        if floored not in bins:
+            bins[floored] = row["파일명"]
+
+    # 템플릿용 리스트 [(filename, "HH:MM"), ...]
+    times = [(fname, dt.strftime("%H:%M")) for dt, fname in bins.items()]
+
+    # 갤러리 링크
+    gallery_link = None
+    link_path = os.path.join(data_path, event, "onedrive_link.txt")
+    if os.path.exists(link_path):
+        with open(link_path, encoding="utf-8") as f:
+            gallery_link = f.read().strip()
+
+    return render_template(
+        "timeline.html",
+        event=event,
+        times=times,
+        link=gallery_link
+    )
+
 @app.route("/post/<filename>")
 def post(filename):
     posts_dir = os.path.join(app.static_folder, "posts")
@@ -93,17 +140,16 @@ def post(filename):
 
     full_path = os.path.join(posts_dir, filename)
     with open(full_path, encoding="utf-8") as f:
-        # 첫 줄: 제목
+        # 제목
         raw_title = f.readline()
         title = raw_title.lstrip("\ufeff").strip()
-        # 나머지: 본문 전체 읽기
+        # 본문
         raw_content = f.read()
-        # 모든 줄의 앞뒤 공백 제거
         lines = raw_content.splitlines()
         cleaned = [ln.strip() for ln in lines]
         content = "\n".join(cleaned).strip()
 
-    # 동일 이름의 이미지(.png/.jpg 등) 탐색
+    # 이미지 탐색
     base, _ = os.path.splitext(filename)
     images = []
     for ext in ("png", "jpg", "jpeg", "gif"):
