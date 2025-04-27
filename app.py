@@ -43,12 +43,12 @@ def index():
 
 @app.route("/search", methods=["POST"])
 def search():
-    event       = request.form["event"]
-    keyword     = request.form["bib"].strip().upper()
-    csv_path    = os.path.join(data_path, event, "results.csv")
+    event        = request.form["event"]
+    keyword      = request.form["bib"].strip().upper()
+    csv_path     = os.path.join(data_path, event, "results.csv")
     gallery_link = None
-    suggestions = []
-    results     = []
+    suggestions  = []
+    results      = []
 
     # results.csv 있으면 배번 검색 및 onedrive 링크, suggestions 구성
     if os.path.exists(csv_path):
@@ -61,13 +61,14 @@ def search():
             with open(link_path, encoding="utf-8") as f:
                 gallery_link = f.read().strip()
 
-    # 결과 없을 때만 timeline.csv 읽어 상위 10행 전달
+    # 결과 없을 때만 timeline.csv 읽기 (제한 없이 모두 보여줌)
     timeline = None
     if not results:
         tl_path = os.path.join(data_path, event, "timeline.csv")
         if os.path.exists(tl_path):
             tl_df = pd.read_csv(tl_path, encoding="utf-8")
-            timeline = tl_df.head(15).values.tolist()
+            # 전체 행을 리스트로 변환
+            timeline = tl_df.values.tolist()
 
     return render_template(
         "results.html",
