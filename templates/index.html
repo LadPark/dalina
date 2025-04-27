@@ -45,6 +45,7 @@
     .post-container h2 {
       font-size: 1.25rem;
       margin-bottom: 12px;
+      text-align: center;
     }
     .post-container ul {
       list-style: none;
@@ -61,9 +62,6 @@
     }
     .post-container a:hover {
       text-decoration: underline;
-    }
-    .post-container h2 {
-      text-align: center;
     }
 
     /* 로고 */
@@ -170,17 +168,32 @@
   </div>
 
   <script>
-    const suggestions = {{ suggestions | tojson }};
-    const input = document.getElementById("bib");
-    const list = document.getElementById("suggestions");
+    // 모든 이벤트별 배번 맵
+    const suggestionsMap = {{ suggestions_map | tojson }};
+    const eventSelect    = document.getElementById("event");
+    const input          = document.getElementById("bib");
+    const list           = document.getElementById("suggestions");
 
+    // 초기 suggestions 세팅
+    let suggestions = suggestionsMap[eventSelect.value] || [];
+
+    // 이벤트 변경 시 해당 이벤트의 배번 리스트로 교체
+    eventSelect.addEventListener("change", () => {
+      suggestions = suggestionsMap[eventSelect.value] || [];
+      input.value = "";
+      list.innerHTML = "";
+    });
+
+    // 입력 시 자동완성
     input.addEventListener("input", () => {
       const value = input.value.toUpperCase();
       list.innerHTML = "";
 
       if (value.length < 1) return;
 
-      const matched = suggestions.filter(bib => bib.startsWith(value)).slice(0, 15);
+      const matched = suggestions
+        .filter(bib => bib.startsWith(value))
+        .slice(0, 15);
 
       matched.forEach(bib => {
         const li = document.createElement("li");
