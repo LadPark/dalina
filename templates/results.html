@@ -17,10 +17,10 @@
       width: 90vw;
       max-width: 600px;
       margin: 5vh auto;
-      background-color: rgba(255, 255, 255, 0.9);
+      background-color: rgba(255,255,255,0.9);
       padding: 30px;
       border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
       text-align: center;
     }
     h1 {
@@ -39,9 +39,19 @@
       margin-bottom: 12px;
       font-size: 1.1rem;
     }
-    h3 {
-      font-size: 1.3rem;
-      margin-top: 30px;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      text-align: left;
+      font-size: 1.1rem;
+    }
+    th, td {
+      border-bottom: 1px solid #ccc;
+      padding: 8px;
+    }
+    th {
+      background-color: #f5f5f5;
     }
     a.button {
       display: inline-block;
@@ -83,9 +93,27 @@
       {% else %}
         <p>해당 배번의 사진이 없습니다.</p>
         {% if link %}
-          <p><a href="{{ link }}" target="_blank" class="link-inline">➡️ 원드라이브에서 전체 사진 보기</a></p>
+          <p><a href="{{ link }}" class="link-inline" target="_blank">
+            ➡️ 원드라이브에서 전체 사진 보기
+          </a></p>
         {% endif %}
-        <p><a href="{{ url_for('timeline', event=event) }}" class="button">⏱️ 이 대회 타임라인 보기</a></p>
+
+        {% if timeline %}
+          <h3>타임라인 (파일명 : 촬영시각)</h3>
+          <table>
+            <thead>
+              <tr><th>파일명</th><th>시간</th></tr>
+            </thead>
+            <tbody>
+              {% for fname, t in timeline %}
+                <tr>
+                  <td>{{ fname }}</td>
+                  <td>{{ t }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% endif %}
       {% endif %}
     </div>
 
