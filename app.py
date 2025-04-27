@@ -67,7 +67,7 @@ def search():
         tl_path = os.path.join(data_path, event, "timeline.csv")
         if os.path.exists(tl_path):
             tl_df = pd.read_csv(tl_path, encoding="utf-8")
-            timeline = tl_df.head(10).values.tolist()
+            timeline = tl_df.head(15).values.tolist()
 
     return render_template(
         "results.html",
