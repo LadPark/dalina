@@ -19,7 +19,8 @@ def index():
         csv_path = os.path.join(data_path, ev, "results.csv")
         if os.path.exists(csv_path):
             df = pd.read_csv(csv_path, encoding="utf-8")
-            suggestions_map[ev] = df["배번"].dropna().unique().tolist()
+            # 문자열로 강제 변환하여 4자리·5자리 모두 포함
+            suggestions_map[ev] = df["배번"].dropna().astype(str).unique().tolist()
         else:
             suggestions_map[ev] = []
 
@@ -51,18 +52,23 @@ def search():
     suggestions  = []
     results      = []
 
-    # results.csv가 있으면 배번 검색, onedrive 링크, suggestions 구성
     if os.path.exists(csv_path):
         df = pd.read_csv(csv_path, encoding="utf-8")
-        matches     = df[df["배번"].str.contains(keyword, na=False)]
-        results     = matches.values.tolist()
-        suggestions = df["배번"].dropna().unique().tolist()
-        link_path   = os.path.join(data_path, event, "onedrive_link.txt")
+        # 배번 검색
+        matches = df[df["배번"].astype(str).str.contains(keyword, na=False)]
+        # 파일명 기준 중복 제거
+        matches = matches.drop_duplicates(subset=["파일명"])
+        results = matches.values.tolist()
+        # 자동완성용 리스트
+        suggestions = df["배번"].dropna().astype(str).unique().tolist()
+
+        # OneDrive 링크
+        link_path = os.path.join(data_path, event, "onedrive_link.txt")
         if os.path.exists(link_path):
             with open(link_path, encoding="utf-8") as f:
                 gallery_link = f.read().strip()
 
-    # 검색 결과가 없으면 timeline.csv(있다면 전체) 읽기
+    # 검색 결과가 없을 때 timeline.csv 읽기
     timeline = None
     if not results:
         tl_path = os.path.join(data_path, event, "timeline.csv")
