@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <!-- (생략: 메타·스타일 동일) -->
+</head>
+<body>
+  <div class="container">
+    <h1>{{ event }} 타임라인 (5분 간격)</h1>
+    <ul>
+      {% for filename, time in times %}
+        <li><strong>{{ filename }}</strong> = {{ time }}</li>
+      {% endfor %}
+    </ul>
+    {% if link %}
+      <a href="{{ link }}" class="link" target="_blank">📁 전체 사진 보기</a>
+    {% endif %}
+    <div><a href="/" class="button">🔍 다른 대회로 돌아가기</a></div>
+  </div>
+</body>
+</html>
