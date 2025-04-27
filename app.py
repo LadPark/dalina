@@ -1,8 +1,6 @@
-from flask import Flask, render_template, request, abort, url_for
+from flask import Flask, render_template, request, abort
 import pandas as pd
 import os
-from datetime import datetime
-from collections import OrderedDict
 
 app = Flask(__name__)
 data_path = "data"
@@ -15,7 +13,7 @@ def index():
         if os.path.isdir(os.path.join(data_path, d))
     ]
 
-    # 자동완성용 배번 리스트
+    # 자동완성용 배번 리스트 (첫 이벤트 기준)
     suggestions = []
     if events:
         default_event = events[0]
@@ -33,12 +31,8 @@ def index():
                 continue
             full_path = os.path.join(posts_dir, fname)
             with open(full_path, encoding="utf-8") as f:
-                raw_title = f.readline()
-                title = raw_title.lstrip("\ufeff").strip()
-            posts.append({
-                "filename": fname,
-                "title": title
-            })
+                title = f.readline().lstrip("\ufeff").strip()
+            posts.append({"filename": fname, "title": title})
 
     return render_template(
         "index.html",
@@ -49,107 +43,60 @@ def index():
 
 @app.route("/search", methods=["POST"])
 def search():
-    event = request.form["event"]
-    keyword = request.form["bib"].strip().upper()
-    csv_path = os.path.join(data_path, event, "results.csv")
-
-    if not os.path.exists(csv_path):
-        return render_template(
-            "results.html",
-            keyword=keyword,
-            results=[],
-            event=event,
-            link=None,
-            suggestions=[]
-        )
-
-    df = pd.read_csv(csv_path, encoding="utf-8")
-    matches = df[df["배번"].str.contains(keyword, na=False)]
-    results = matches.values.tolist()
-
-    # 갤러리 링크 (onedrive_link.txt)
+    event       = request.form["event"]
+    keyword     = request.form["bib"].strip().upper()
+    csv_path    = os.path.join(data_path, event, "results.csv")
     gallery_link = None
-    link_path = os.path.join(data_path, event, "onedrive_link.txt")
-    if os.path.exists(link_path):
-        with open(link_path, encoding="utf-8") as f:
-            gallery_link = f.read().strip()
+    suggestions = []
+    results     = []
 
-    # 검색 후 자동완성 리스트
-    suggestions = df["배번"].dropna().unique().tolist()
+    # results.csv 있으면 배번 검색 및 onedrive 링크, suggestions 구성
+    if os.path.exists(csv_path):
+        df = pd.read_csv(csv_path, encoding="utf-8")
+        matches = df[df["배번"].str.contains(keyword, na=False)]
+        results = matches.values.tolist()
+        suggestions = df["배번"].dropna().unique().tolist()
+        link_path = os.path.join(data_path, event, "onedrive_link.txt")
+        if os.path.exists(link_path):
+            with open(link_path, encoding="utf-8") as f:
+                gallery_link = f.read().strip()
+
+    # 결과 없을 때만 timeline.csv 읽어 상위 10행 전달
+    timeline = None
+    if not results:
+        tl_path = os.path.join(data_path, event, "timeline.csv")
+        if os.path.exists(tl_path):
+            tl_df = pd.read_csv(tl_path, encoding="utf-8")
+            timeline = tl_df.head(10).values.tolist()
 
     return render_template(
         "results.html",
+        event=event,
         keyword=keyword,
         results=results,
-        event=event,
         link=gallery_link,
-        suggestions=suggestions
-    )
-
-@app.route("/timeline/<event>")
-def timeline(event):
-    # results.csv 경로 확인
-    csv_path = os.path.join(data_path, event, "results.csv")
-    if not os.path.exists(csv_path):
-        abort(404)
-
-    # CSV 읽기
-    df = pd.read_csv(csv_path, encoding="utf-8")
-
-    # 촬영시각을 datetime 으로 파싱
-    def parse_dt(ts):
-        try:
-            return datetime.strptime(ts, "%Y:%m:%d %H:%M:%S")
-        except:
-            return None
-
-    df["dt"] = df["촬영시각"].map(parse_dt)
-    df = df.dropna(subset=["dt"]).sort_values("dt")
-
-    # 5분 단위로 첫 사진만 추출
-    bins = OrderedDict()
-    for _, row in df.iterrows():
-        dt = row["dt"]
-        floored = dt.replace(minute=(dt.minute // 5) * 5, second=0, microsecond=0)
-        if floored not in bins:
-            bins[floored] = row["파일명"]
-
-    # 템플릿용 리스트 [(filename, "HH:MM"), ...]
-    times = [(fname, dt.strftime("%H:%M")) for dt, fname in bins.items()]
-
-    # 갤러리 링크
-    gallery_link = None
-    link_path = os.path.join(data_path, event, "onedrive_link.txt")
-    if os.path.exists(link_path):
-        with open(link_path, encoding="utf-8") as f:
-            gallery_link = f.read().strip()
-
-    return render_template(
-        "timeline.html",
-        event=event,
-        times=times,
-        link=gallery_link
+        suggestions=suggestions,
+        timeline=timeline
     )
 
 @app.route("/post/<filename>")
 def post(filename):
+    # 게시물 .txt 파일 렌더링
     posts_dir = os.path.join(app.static_folder, "posts")
-    # 유효한 .txt 파일인지 확인
     if filename not in os.listdir(posts_dir) or not filename.lower().endswith(".txt"):
         abort(404)
 
     full_path = os.path.join(posts_dir, filename)
     with open(full_path, encoding="utf-8") as f:
-        # 제목
         raw_title = f.readline()
         title = raw_title.lstrip("\ufeff").strip()
-        # 본문
         raw_content = f.read()
+        # 각 줄 앞뒤 공백 제거
         lines = raw_content.splitlines()
         cleaned = [ln.strip() for ln in lines]
         content = "\n".join(cleaned).strip()
 
-    # 이미지 탐색
+    # 동일 이름 이미지(.png/.jpg 등) 찾기
     base, _ = os.path.splitext(filename)
     images = []
     for ext in ("png", "jpg", "jpeg", "gif"):
