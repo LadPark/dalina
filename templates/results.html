@@ -57,6 +57,16 @@
     a.button:hover {
       background-color: #0056a3;
     }
+    .link-inline {
+      display: inline-block;
+      margin-top: 12px;
+      font-size: 1.1rem;
+      color: #0066cc;
+      text-decoration: none;
+    }
+    .link-inline:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -72,14 +82,12 @@
         </ul>
       {% else %}
         <p>해당 배번의 사진이 없습니다.</p>
+        {% if link %}
+          <p><a href="{{ link }}" target="_blank" class="link-inline">➡️ 원드라이브에서 전체 사진 보기</a></p>
+        {% endif %}
+        <p><a href="{{ url_for('timeline', event=event) }}" class="button">⏱️ 이 대회 타임라인 보기</a></p>
       {% endif %}
     </div>
-
-    {% if link %}
-      <hr>
-      <h3>📁 전체 사진 보기 ({{ event }})</h3>
-      <p><a href="{{ link }}" target="_blank">➡️ 원드라이브에서 전체 사진 보기</a></p>
-    {% endif %}
 
     <div>
       <a href="/" class="button">🔍 다른 배번 검색하기</a>
