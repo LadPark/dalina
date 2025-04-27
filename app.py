@@ -13,14 +13,15 @@ def index():
         if os.path.isdir(os.path.join(data_path, d))
     ]
 
-    # 자동완성용 배번 리스트 (첫 이벤트 기준)
-    suggestions = []
-    if events:
-        default_event = events[0]
-        csv_path = os.path.join(data_path, default_event, "results.csv")
+    # 모든 이벤트별 자동완성용 배번 맵
+    suggestions_map = {}
+    for ev in events:
+        csv_path = os.path.join(data_path, ev, "results.csv")
         if os.path.exists(csv_path):
             df = pd.read_csv(csv_path, encoding="utf-8")
-            suggestions = df["배번"].dropna().unique().tolist()
+            suggestions_map[ev] = df["배번"].dropna().unique().tolist()
+        else:
+            suggestions_map[ev] = []
 
     # 게시물 목록 (static/posts/*.txt)
     posts = []
@@ -37,7 +38,7 @@ def index():
     return render_template(
         "index.html",
         events=events,
-        suggestions=suggestions,
+        suggestions_map=suggestions_map,
         posts=posts
     )
 
@@ -50,24 +51,23 @@ def search():
     suggestions  = []
     results      = []
 
-    # results.csv 있으면 배번 검색 및 onedrive 링크, suggestions 구성
+    # results.csv가 있으면 배번 검색, onedrive 링크, suggestions 구성
     if os.path.exists(csv_path):
         df = pd.read_csv(csv_path, encoding="utf-8")
-        matches = df[df["배번"].str.contains(keyword, na=False)]
-        results = matches.values.tolist()
+        matches     = df[df["배번"].str.contains(keyword, na=False)]
+        results     = matches.values.tolist()
         suggestions = df["배번"].dropna().unique().tolist()
-        link_path = os.path.join(data_path, event, "onedrive_link.txt")
+        link_path   = os.path.join(data_path, event, "onedrive_link.txt")
         if os.path.exists(link_path):
             with open(link_path, encoding="utf-8") as f:
                 gallery_link = f.read().strip()
 
-    # 결과 없을 때만 timeline.csv 읽기 (제한 없이 모두 보여줌)
+    # 검색 결과가 없으면 timeline.csv(있다면 전체) 읽기
     timeline = None
     if not results:
         tl_path = os.path.join(data_path, event, "timeline.csv")
         if os.path.exists(tl_path):
             tl_df = pd.read_csv(tl_path, encoding="utf-8")
-            # 전체 행을 리스트로 변환
             timeline = tl_df.values.tolist()
 
     return render_template(
@@ -82,24 +82,21 @@ def search():
 
 @app.route("/post/<filename>")
 def post(filename):
-    # 게시물 .txt 파일 렌더링
     posts_dir = os.path.join(app.static_folder, "posts")
     if filename not in os.listdir(posts_dir) or not filename.lower().endswith(".txt"):
         abort(404)
 
     full_path = os.path.join(posts_dir, filename)
     with open(full_path, encoding="utf-8") as f:
-        raw_title = f.readline()
-        title = raw_title.lstrip("\ufeff").strip()
+        raw_title   = f.readline()
+        title       = raw_title.lstrip("\ufeff").strip()
         raw_content = f.read()
-        # 각 줄 앞뒤 공백 제거
-        lines = raw_content.splitlines()
-        cleaned = [ln.strip() for ln in lines]
-        content = "\n".join(cleaned).strip()
+        lines       = raw_content.splitlines()
+        cleaned     = [ln.strip() for ln in lines]
+        content     = "\n".join(cleaned).strip()
 
-    # 동일 이름 이미지(.png/.jpg 등) 찾기
     base, _ = os.path.splitext(filename)
-    images = []
+    images  = []
     for ext in ("png", "jpg", "jpeg", "gif"):
         img_name = f"{base}.{ext}"
         if os.path.exists(os.path.join(posts_dir, img_name)):
