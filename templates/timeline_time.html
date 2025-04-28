@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ event }} - {{ time }} 타임라인 사진</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      padding: 20px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+    }
+    .thumb-grid {
+      display: grid;
+      gap: 8px;
+      overflow-y: auto;
+      padding-right: 10px;
+      margin-bottom: 20px;
+    }
+    .thumb-grid img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .thumb-grid img:hover {
+      transform: scale(1.05);
+      z-index: 10;
+    }
+    #preview-container {
+      margin-top: 20px;
+    }
+    #preview-image {
+      max-width: 90%;
+      max-height: 80vh;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      display: none;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      cursor: pointer;
+    }
+    a.button {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #6c757d;
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+    }
+    a.button:hover {
+      background-color: #5a6268;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 id="page-title">{{ event }} - {{ time }} 구간 사진</h1>
+
+    <ul class="thumb-grid" id="thumbGrid">
+      {% for item in items %}
+        <li>
+          <img 
+            src="{{ item.thumb }}" 
+            data-preview="{{ item.preview }}"
+            data-full="{{ item.full }}"
+            data-file-no="{{ item.file_no }}"
+            alt="썸네일"
+            onmouseover="showPreview(this.dataset.preview)"
+            ontouchstart="showPreview(this.dataset.preview)">
+        </li>
+      {% endfor %}
+    </ul>
+
+    <div id="preview-container">
+      <img id="preview-image" src="" onclick="openFull()">
+    </div>
+
+    <a href="/" class="button">🔙 다른 대회로 돌아가기</a>
+  </div>
+
+  <script>
+    let fullImageUrl = '';
+    let loading = false;
+    let lastFileNo = {{ center_file_no }};
+    const gap = 8;
+    const rows = 2;
+    const thumbGrid = document.getElementById('thumbGrid');
+    const titleElement = document.getElementById('page-title');
+    const timelineMap = {{ timeline_map | tojson }};
+
+    // 썸네일 기본 설정
+    let thumbnailWidth = 135;
+    let thumbnailHeight = 90;
+
+    if (window.innerWidth <= 768) {
+      thumbnailWidth = 90;
+      thumbnailHeight = 135;
+    }
+
+    const windowWidth = window.innerWidth;
+    const thumbnailsPerRow = Math.floor(windowWidth / thumbnailWidth);
+
+    thumbGrid.style.gridTemplateColumns = `repeat(${thumbnailsPerRow}, 1fr)`;
+    thumbGrid.style.gridAutoRows = thumbnailHeight + "px";
+    thumbGrid.style.height = (thumbnailHeight * rows) + (gap * (rows - 1)) + "px";
+
+    function showPreview(url) {
+      const previewImg = document.getElementById('preview-image');
+      previewImg.src = url;
+      previewImg.style.display = 'block';
+      fullImageUrl = event.target.dataset.full;
+    }
+
+    function openFull() {
+      if (fullImageUrl) {
+        window.open(fullImageUrl, '_blank');
+      }
+    }
+
+    async function loadMore(direction) {
+      if (loading) return;
+      loading = true;
+
+      const formData = new FormData();
+      formData.append('direction', direction);
+      formData.append('current_file_no', lastFileNo);
+
+      const res = await fetch(`/event/{{ event }}/timeline/{{ time }}/load_more`, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!res.ok) {
+        loading = false;
+        return;
+      }
+
+      const items = await res.json();
+      items.forEach(item => {
+        const li = document.createElement('li');
+        li.innerHTML = `<img src="${item.thumb}" 
+                            data-preview="${item.preview}"
+                            data-full="${item.full}"
+                            data-file-no="${item.file_no}"
+                            alt="썸네일"
+                            onmouseover="showPreview(this.dataset.preview)"
+                            ontouchstart="showPreview(this.dataset.preview)">`;
+        thumbGrid.appendChild(li);
+        lastFileNo = item.file_no;
+      });
+
+      loading = false;
+    }
+
+    function updateTitleBasedOnScroll() {
+      const thumbnails = thumbGrid.querySelectorAll('img');
+      let closestThumbnail = null;
+      let closestTop = Infinity;
+
+      thumbnails.forEach(thumb => {
+        const rect = thumb.getBoundingClientRect();
+        const thumbTop = rect.top - thumbGrid.getBoundingClientRect().top;
+
+        if (thumbTop >= 0 && thumbTop < closestTop) {
+          closestTop = thumbTop;
+          closestThumbnail = thumb;
+        }
+      });
+
+      if (closestThumbnail) {
+        const fileNo = parseInt(closestThumbnail.dataset.fileNo);
+
+        const timelineKeys = Object.keys(timelineMap).map(k => parseInt(k)).sort((a, b) => a - b);
+        let matchedTime = null;
+
+        for (let i = timelineKeys.length - 1; i >= 0; i--) {
+          if (fileNo >= timelineKeys[i]) {
+            matchedTime = timelineMap[timelineKeys[i]];
+            break;
+          }
+        }
+
+        if (matchedTime) {
+          titleElement.textContent = `{{ event }} - ${matchedTime} 구간 사진`;
+        }
+      }
+    }
+
+    thumbGrid.addEventListener('scroll', () => {
+      if (loading) return;
+
+      updateTitleBasedOnScroll();
+
+      const nearBottom = thumbGrid.scrollTop + thumbGrid.clientHeight >= thumbGrid.scrollHeight - 100;
+      if (nearBottom) {
+        loadMore('down');
+      }
+    });
+  </script>
+</body>
+</html>

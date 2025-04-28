@@ -6,57 +6,107 @@
   <title>검색 결과 - 달리나</title>
   <style>
     body {
+      margin: 0;
+      padding: 0;
       font-family: sans-serif;
       background-image: url("/static/result_bg.png");
       background-size: cover;
       background-position: center;
-      margin: 0;
-      padding: 0;
     }
     .container {
       width: 90vw;
-      max-width: 600px;
+      max-width: 800px;
       margin: 5vh auto;
-      background-color: rgba(255,255,255,0.9);
+      background-color: rgba(255, 255, 255, 0.95);
       padding: 30px;
       border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
       text-align: center;
+      position: relative;
     }
     h1 {
       font-size: 1.5rem;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
     }
-    .results {
-      margin-top: 20px;
-      text-align: left;
+    .alert {
+      color: #c00;
+      font-size: 1rem;
+      margin-bottom: 16px;
     }
-    .results ul {
+    /* 썸네일 영역 */
+    .thumb-grid-wrapper {
+      position: relative;
+      margin: 20px 0;
+    }
+    .thumb-grid {
+      display: flex;
+      overflow-x: auto;
+      align-items: center;
+      gap: 4px;
       list-style: none;
       padding: 0;
       margin: 0;
+      scroll-snap-type: x mandatory;
     }
-    .results li {
-      margin-bottom: 12px;
-      font-size: 1.1rem;
+    .thumb-grid li {
+      flex: 0 0 auto;
+      scroll-snap-align: start;
     }
-    h3 {
-      font-size: 1.3rem;
+    /* 썸네일 이미지 (세로 고정, 가로 비율 자유) */
+    .thumb-grid img {
+      height: 130px;    /* 세로 고정 */
+      width: auto;      /* 가로는 원본 비율 */
+      object-fit: contain;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .thumb-grid img:hover {
+      transform: scale(1.05);
+      z-index: 10;
+    }
+    /* 스크롤 화살표 */
+    .scroll-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 2rem;
+      color: red;
+      cursor: pointer;
+      user-select: none;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 5px 10px;
+      border-radius: 50%;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+      z-index: 5;
+    }
+    .scroll-left {
+      left: -20px;
+      display: none;
+    }
+    .scroll-right {
+      right: -20px;
+      display: none;
+    }
+    /* 프리뷰 영역 */
+    #preview-container {
       margin-top: 30px;
+      text-align: center;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      font-size: 1.1rem;
+    #preview-image {
+      max-width: 90%;
+      max-height: 80vh;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      display: none;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+      cursor: pointer;
     }
-    th, td {
-      border-bottom: 1px solid #ccc;
-      padding: 8px;
-      text-align: left;
-    }
-    th {
-      background-color: #f5f5f5;
+    /* 스크롤바 숨기기 */
+    .thumb-grid::-webkit-scrollbar {
+      display: none;
     }
     a.button {
       display: inline-block;
@@ -72,78 +122,102 @@
     a.button:hover {
       background-color: #0056a3;
     }
-    .link-inline {
-      display: inline-block;
-      margin-top: 12px;
-      font-size: 1.1rem;
-      color: #0066cc;
-      text-decoration: none;
-    }
-    .link-inline:hover {
-      text-decoration: underline;
-    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>{{ event }} / 배번: {{ keyword }} 검색 결과</h1>
+    <h1>📷 {{ event }} / 배번: {{ bib }} 검색 결과</h1>
 
-    <!-- 추가된 경고 문구 -->
-    <p class="warning">
-      연사로 찍으니 꼭 내 사진 앞뒤로 몇 장 씩 더 확인해주세요.<br>
-      잘 나온 사진이 숨겨져 있을 수 있습니다.
-    </p>
+    {% if items %}
+      <p class="alert">🔎 연사로 찍으니, 꼭 앞뒤 사진도 확인해 보세요!</p>
 
-    <div class="results">
-      {% if results %}
-        <ul>
-          {% for row in results %}
-            <li><strong>{{ row[1] }}</strong></li>
+      <div class="thumb-grid-wrapper">
+        <div class="scroll-arrow scroll-left" onclick="scrollThumbnails('left')">◀</div>
+        <ul class="thumb-grid" id="thumbGrid">
+          {% for item in items %}
+            <li>
+              <img 
+                src="{{ item.thumb }}" 
+                data-preview="{{ item.preview }}"
+                data-full="{{ item.full }}"
+                alt="{{ item.name }}"
+                onmouseover="showPreview(this.dataset.preview, this.dataset.full)"
+                ontouchstart="showPreview(this.dataset.preview, this.dataset.full)"
+              >
+            </li>
           {% endfor %}
         </ul>
+        <div class="scroll-arrow scroll-right" onclick="scrollThumbnails('right')">▶</div>
+      </div>
 
-        {% if link %}
-          <hr>
-          <h3>📁 전체 사진 보기 ({{ event }})</h3>
-          <p>
-            <a href="{{ link }}" class="link-inline" target="_blank">
-              ➡️ 원드라이브에서 전체 사진 보기
-            </a>
-          </p>
-        {% endif %}
-      {% else %}
-        <p>해당 배번의 사진이 없습니다.</p>
+      <div id="preview-container">
+        <img id="preview-image" src="">
+      </div>
 
-        {% if link %}
-          <p>
-            <a href="{{ link }}" class="link-inline" target="_blank">
-              ➡️ 원드라이브에서 전체 사진 보기
-            </a>
-          </p>
-        {% endif %}
-
-        {% if timeline %}
-          <h3>타임라인 (파일명 : 촬영시각)</h3>
-          <table>
-            <thead>
-              <tr><th>파일명</th><th>시간</th></tr>
-            </thead>
-            <tbody>
-              {% for fname, t in timeline %}
-                <tr>
-                  <td>{{ fname }}</td>
-                  <td>{{ t }}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        {% endif %}
-      {% endif %}
-    </div>
+    {% else %}
+      <p>해당 배번의 사진이 없습니다.</p>
+    {% endif %}
 
     <div>
       <a href="/" class="button">🔍 다른 배번 검색하기</a>
     </div>
   </div>
+
+  <script>
+    let fullImageUrl = '';
+
+    function showPreview(previewUrl, fullUrl) {
+      const previewImg = document.getElementById('preview-image');
+      previewImg.src = previewUrl;
+      previewImg.style.display = 'block';
+      fullImageUrl = fullUrl;
+    }
+
+    document.getElementById('preview-image').addEventListener('click', function() {
+      if (fullImageUrl) {
+        window.open(fullImageUrl, '_blank');
+      }
+    });
+
+    // 스크롤 화살표 제어
+    const thumbGrid = document.getElementById('thumbGrid');
+    const scrollLeftArrow = document.querySelector('.scroll-left');
+    const scrollRightArrow = document.querySelector('.scroll-right');
+
+    function updateArrows() {
+      const scrollLeft = thumbGrid.scrollLeft;
+      const scrollWidth = thumbGrid.scrollWidth;
+      const clientWidth = thumbGrid.clientWidth;
+
+      if (scrollWidth <= clientWidth) {
+        scrollLeftArrow.style.display = 'none';
+        scrollRightArrow.style.display = 'none';
+      } else {
+        if (scrollLeft === 0) {
+          scrollLeftArrow.style.display = 'none';
+          scrollRightArrow.style.display = 'block';
+        } else if (scrollLeft + clientWidth >= scrollWidth - 5) {
+          scrollLeftArrow.style.display = 'block';
+          scrollRightArrow.style.display = 'none';
+        } else {
+          scrollLeftArrow.style.display = 'block';
+          scrollRightArrow.style.display = 'block';
+        }
+      }
+    }
+
+    thumbGrid.addEventListener('scroll', updateArrows);
+
+    function scrollThumbnails(direction) {
+      const amount = thumbGrid.clientWidth * 0.8;
+      if (direction === 'left') {
+        thumbGrid.scrollBy({ left: -amount, behavior: 'smooth' });
+      } else {
+        thumbGrid.scrollBy({ left: amount, behavior: 'smooth' });
+      }
+    }
+
+    window.addEventListener('load', updateArrows);
+  </script>
 </body>
 </html>

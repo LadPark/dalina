@@ -1,20 +1,67 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <!-- (생략: 메타·스타일 동일) -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ event }} 타임라인 (5분 간격)</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      padding: 20px;
+      text-align: center;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      margin: 10px 0;
+    }
+    a.time-link {
+      text-decoration: none;
+      font-size: 1.2rem;
+      color: #007BFF;
+    }
+    a.time-link:hover {
+      text-decoration: underline;
+    }
+    a.button {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #6c757d;
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+    }
+    a.button:hover {
+      background-color: #5a6268;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
     <h1>{{ event }} 타임라인 (5분 간격)</h1>
+
     <ul>
-      {% for filename, time in times %}
-        <li><strong>{{ filename }}</strong> = {{ time }}</li>
+      {% for t in time_list %}
+        <li>
+          <a class="time-link" href="/event/{{ event }}/timeline/{{ t }}">{{ t }} 구간 보기</a>
+        </li>
       {% endfor %}
     </ul>
-    {% if link %}
-      <a href="{{ link }}" class="link" target="_blank">📁 전체 사진 보기</a>
-    {% endif %}
-    <div><a href="/" class="button">🔍 다른 대회로 돌아가기</a></div>
+
+    <a href="/" class="button">🔙 다른 대회로 돌아가기</a>
   </div>
 </body>
 </html>

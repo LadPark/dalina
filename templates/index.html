@@ -5,25 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>달리나 - 마라톤 사진 찾기</title>
 
-  <!-- 파비콘 설정 -->
+  <!-- 파비콘 -->
   <link rel="icon" href="{{ url_for('static', filename='logo.png') }}" type="image/png">
   <link rel="shortcut icon" href="{{ url_for('static', filename='logo.ico') }}">
 
-  <!-- Open Graph 메타태그 (SNS 미리보기용) -->
+  <!-- Open Graph -->
   <meta property="og:title"       content="달리나 - 마라톤 사진 찾기">
   <meta property="og:description" content="배번만 입력하면 마라톤 사진을 쉽게 찾아드립니다.">
   <meta property="og:image"       content="https://dalina.kr{{ url_for('static', filename='logo.png') }}">
   <meta property="og:url"         content="https://dalina.kr">
   <meta property="og:type"        content="website">
 
-  <!-- Twitter Card 메타태그 -->
+  <!-- Twitter Card -->
   <meta name="twitter:card"        content="summary_large_image">
   <meta name="twitter:title"       content="달리나 - 마라톤 사진 찾기">
   <meta name="twitter:description" content="배번만 입력하면 마라톤 사진을 쉽게 찾아드립니다.">
   <meta name="twitter:image"       content="https://dalina.kr{{ url_for('static', filename='logo.png') }}">
-  
+
   <style>
-    /* 배경 이미지 전체 화면 커버 */
     body {
       margin: 0;
       padding: 0;
@@ -31,12 +30,10 @@
       background: url('/static/bg.png') no-repeat center center fixed;
       background-size: cover;
     }
-
-    /* 화면 중앙 1:1 비율 기본 컨테이너 */
     .container {
       width: 70vw;
       max-width: 400px;
-      aspect-ratio: 10 / 10;
+      aspect-ratio: 10/10;
       margin: 20px auto 0;
       display: flex;
       flex-direction: column;
@@ -44,22 +41,19 @@
       justify-content: center;
       background-color: rgba(255, 255, 255, 0.85);
       border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
       padding: 5px;
     }
-
-    /* 게시물 링크 컨테이너 */
     .post-container {
       width: 70vw;
       max-width: 400px;
       margin: 20px auto;
       background-color: rgba(255, 255, 255, 0.85);
       border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
       padding: 5px;
-      text-align: left;
+      text-align: center;
     }
-
     .post-container h2 {
       font-size: 1.25rem;
       margin-bottom: 12px;
@@ -81,27 +75,20 @@
     .post-container a:hover {
       text-decoration: underline;
     }
-
-    /* 로고 */
     .logo {
       width: 120px;
       margin-bottom: 10px;
     }
-
-    /* form 및 요소 스타일 */
     form {
       width: 100%;
       text-align: center;
     }
-
     label {
       font-size: 1rem;
       display: block;
       margin-bottom: 8px;
     }
-
-    select,
-    input[type="text"] {
+    select, input[type="text"] {
       width: 100%;
       padding: 10px;
       font-size: 1.1rem;
@@ -110,7 +97,6 @@
       box-sizing: border-box;
       margin-bottom: 20px;
     }
-
     button {
       width: 100%;
       padding: 12px;
@@ -121,11 +107,16 @@
       color: white;
       cursor: pointer;
     }
-
     button:hover {
       background-color: #0056b3;
     }
-
+    .button-secondary {
+      margin-top: 10px;
+      background-color: #6c757d;
+    }
+    .button-secondary:hover {
+      background-color: #5a6268;
+    }
     .suggest-box {
       position: absolute;
       background: white;
@@ -139,12 +130,10 @@
       z-index: 999;
       box-sizing: border-box;
     }
-
     .suggest-box li {
       padding: 8px;
       cursor: pointer;
     }
-
     .suggest-box li:hover {
       background: #f0f0f0;
     }
@@ -152,7 +141,6 @@
 </head>
 <body>
   <div class="container">
-    <!-- 로고 삽입 -->
     <img src="/static/logo.svg" alt="Dalina Logo" class="logo">
   
     <form action="/search" method="post">
@@ -169,11 +157,13 @@
         <ul id="suggestions" class="suggest-box"></ul>
       </div>
 
-      <button type="submit">검색</button>
+      <button type="submit">🔍 검색</button>
     </form>
+
+    <!-- 배번 없이 전체 보기 버튼 추가 -->
+    <button class="button-secondary" onclick="goToTimeline()">🏃 배번 없이 전체 사진 보기</button>
   </div>
 
-  <!-- 게시물 및 공지사항 링크 섹션 -->
   <div class="post-container">
     <h2>공지 및 이용 안내</h2>
     <ul>
@@ -186,23 +176,20 @@
   </div>
 
   <script>
-    // 모든 이벤트별 배번 맵
+    // 자동완성 데이터
     const suggestionsMap = {{ suggestions_map | tojson }};
     const eventSelect    = document.getElementById("event");
     const input          = document.getElementById("bib");
     const list           = document.getElementById("suggestions");
 
-    // 초기 suggestions 세팅
     let suggestions = suggestionsMap[eventSelect.value] || [];
 
-    // 이벤트 변경 시 해당 이벤트의 배번 리스트로 교체
     eventSelect.addEventListener("change", () => {
       suggestions = suggestionsMap[eventSelect.value] || [];
       input.value = "";
       list.innerHTML = "";
     });
 
-    // 입력 시 자동완성
     input.addEventListener("input", () => {
       const value = input.value.toUpperCase();
       list.innerHTML = "";
@@ -223,6 +210,16 @@
         list.appendChild(li);
       });
     });
+
+    // 배번 없이 전체 보기 이동
+    function goToTimeline() {
+      const selectedEvent = document.getElementById("event").value;
+      if (selectedEvent) {
+        window.location.href = `/event/${selectedEvent}/timeline`; // 🔥 수정된 부분
+      } else {
+        alert('먼저 대회를 선택해주세요.');
+      }
+    }
   </script>
 </body>
 </html>
