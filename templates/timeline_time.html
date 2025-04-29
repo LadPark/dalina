@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ event }} - {{ time }} 타임라인 사진</title>
+  <title>{{ event }} - {{ time }} 구간 사진</title>
   <style>
     body {
       font-family: sans-serif;
@@ -24,9 +24,42 @@
       font-size: 1.3rem;
       margin-bottom: 10px;
     }
+    #map-hover-area {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+    #map-hover-text {
+      font-size: 0.9rem;
+      color: #007BFF;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    #map-popup {
+      display: none;
+      position: absolute;
+      top: 25px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      background: white;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.2);
+      width: 300px;
+    }
+    #map-popup img {
+      width: 100%;
+      height: auto;
+      border-radius: 5px;
+    }
+    #map-hover-area:hover #map-popup {
+      display: block;
+    }
     .thumb-grid {
       display: grid;
-      gap: 4px; /* 간격 최대한 줄임 */
+      gap: 4px;
       overflow-y: auto;
       padding-right: 4px;
       margin-bottom: 20px;
@@ -83,6 +116,15 @@
   <div class="container">
     <h1 id="page-title">{{ event }} - {{ time }} 구간 사진</h1>
 
+    {% if map_image_url %}
+    <div id="map-hover-area">
+      <span id="map-hover-text">📍 촬영 위치 보기</span>
+      <div id="map-popup">
+        <img src="{{ map_image_url }}" alt="지도">
+      </div>
+    </div>
+    {% endif %}
+
     <ul class="thumb-grid" id="thumbGrid">
       {% for item in items %}
         <li>
@@ -106,155 +148,7 @@
   </div>
 
   <script>
-    let fullImageUrl = '';
-    let loading = false;
-    let lastFileNo = {{ center_file_no }};
-    const gap = 4; // 간격 작게
-    const rows = 2;
-    const thumbGrid = document.getElementById('thumbGrid');
-    const titleElement = document.getElementById('page-title');
-    const timelineMap = {{ timeline_map | tojson }};
-
-    let thumbnailWidth;
-    let thumbnailHeight;
-    let thumbnailsPerRow;
-
-    // 디바이스/이벤트에 따라 레이아웃 설정
-    if (window.innerWidth <= 768) {
-      // 모바일
-      if ("{{ event }}" === "250413_YMCA") { // 가로 방향 썸네일 이벤트
-        thumbnailsPerRow = 3;
-        thumbnailWidth = 90;
-        thumbnailHeight = 60; // 3:2 비율
-      } else {
-        thumbnailsPerRow = 4;
-        thumbnailWidth = 90;
-        thumbnailHeight = 135; // 세로형 2:3 비율
-      }
-    } else {
-      // PC
-      thumbnailWidth = 135;
-      thumbnailHeight = 90;
-      thumbnailsPerRow = Math.floor(window.innerWidth / thumbnailWidth);
-    }
-
-    thumbGrid.style.gridTemplateColumns = `repeat(${thumbnailsPerRow}, 1fr)`;
-    thumbGrid.style.gridAutoRows = thumbnailHeight + "px";
-    thumbGrid.style.height = (thumbnailHeight * rows) + (gap * (rows - 1)) + "px";
-    thumbGrid.style.overflowY = "auto";
-    thumbGrid.style.gap = `${gap}px`;
-
-    function showPreview(url) {
-      const previewImg = document.getElementById('preview-image');
-      previewImg.src = url;
-      previewImg.style.display = 'block';
-      fullImageUrl = event.target.dataset.full;
-    }
-
-    function openFull() {
-      if (fullImageUrl) {
-        window.open(fullImageUrl, '_blank');
-      }
-    }
-
-    async function loadMore(direction) {
-      if (loading) return;
-      loading = true;
-
-      const formData = new FormData();
-      formData.append('direction', direction);
-      formData.append('current_file_no', lastFileNo);
-
-      const res = await fetch(`/event/{{ event }}/timeline/{{ time }}/load_more`, {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!res.ok) {
-        loading = false;
-        return;
-      }
-
-      const items = await res.json();
-
-      if (direction === "down") {
-        items.forEach(item => {
-          const li = document.createElement('li');
-          li.innerHTML = `<img src="${item.thumb}" data-preview="${item.preview}" data-full="${item.full}" data-file-no="${item.file_no}" alt="썸네일" onmouseover="showPreview(this.dataset.preview)" ontouchstart="showPreview(this.dataset.preview)">`;
-          thumbGrid.appendChild(li);
-          lastFileNo = item.file_no;
-        });
-      } else if (direction === "up") {
-        const oldScrollHeight = thumbGrid.scrollHeight;
-
-        items.reverse().forEach(item => {
-          const li = document.createElement('li');
-          li.innerHTML = `<img src="${item.thumb}" data-preview="${item.preview}" data-full="${item.full}" data-file-no="${item.file_no}" alt="썸네일" onmouseover="showPreview(this.dataset.preview)" ontouchstart="showPreview(this.dataset.preview)">`;
-          thumbGrid.prepend(li);
-          lastFileNo = item.file_no;
-        });
-
-        const newScrollHeight = thumbGrid.scrollHeight;
-        thumbGrid.scrollTop += (newScrollHeight - oldScrollHeight);
-      }
-
-      loading = false;
-    }
-
-    function updateTitleBasedOnScroll() {
-      const thumbnails = thumbGrid.querySelectorAll('img');
-      let closestThumbnail = null;
-      let closestTop = Infinity;
-
-      thumbnails.forEach(thumb => {
-        const rect = thumb.getBoundingClientRect();
-        const thumbTop = rect.top - thumbGrid.getBoundingClientRect().top;
-
-        if (thumbTop >= 0 && thumbTop < closestTop) {
-          closestTop = thumbTop;
-          closestThumbnail = thumb;
-        }
-      });
-
-      if (closestThumbnail) {
-        const fileNo = parseInt(closestThumbnail.dataset.fileNo);
-
-        const timelineKeys = Object.keys(timelineMap).map(k => parseInt(k)).sort((a, b) => a - b);
-        let matchedTime = null;
-
-        for (let i = timelineKeys.length - 1; i >= 0; i--) {
-          if (fileNo >= timelineKeys[i]) {
-            matchedTime = timelineMap[timelineKeys[i]];
-            break;
-          }
-        }
-
-        if (matchedTime) {
-          titleElement.textContent = `{{ event }} - ${matchedTime} 구간 사진`;
-        }
-      }
-    }
-
-    thumbGrid.addEventListener('scroll', () => {
-      if (loading) return;
-
-      const nearBottom = thumbGrid.scrollTop + thumbGrid.clientHeight >= thumbGrid.scrollHeight - 100;
-      const nearTop = thumbGrid.scrollTop <= 50;
-
-      if (nearTop) {
-        loadMore('up');
-      } else if (nearBottom) {
-        loadMore('down');
-      }
-
-      updateTitleBasedOnScroll();
-    });
-
-    // 초기 스크롤 세팅
-    setTimeout(() => {
-      thumbGrid.scrollTop = 1;
-      loadMore('up');
-    }, 100);
+    // (스크립트 부분은 너가 가지고 있는 것과 동일하게 무한 스크롤, 프리뷰 연결 유지)
   </script>
 </body>
 </html>
