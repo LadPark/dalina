@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ event }} - {{ time }} 구간 사진</title>
+  <title>{{ event }} - {{ time }}</title>
   <style>
     html, body {
       height: 100%;
@@ -26,49 +26,27 @@
       display: flex;
       flex-direction: column;
     }
-    h1 {
-      font-size: 1.3rem;
-      margin-bottom: 5px;
-    }
-    #map-hover-area {
+    .thumb-grid-wrapper {
       position: relative;
-      display: inline-block;
-      margin-bottom: 10px;
     }
-    #map-hover-text {
-      font-size: 0.9rem;
-      color: #FF0000;
-      cursor: pointer;
-      text-decoration: underline;
-    }
-    #map-popup {
-      display: none;
+    #time-overlay {
       position: absolute;
-      top: 25px;
+      top: 50%;
       left: 50%;
-      transform: translateX(-50%);
-      z-index: 10;
-      background: white;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.2);
-      width: 300px;
-    }
-    #map-popup img {
-      width: 100%;
-      height: auto;
-      border-radius: 5px;
-    }
-    #map-hover-area:hover #map-popup {
-      display: block;
+      transform: translate(-50%, -50%);
+      font-size: 2rem;
+      font-weight: bold;
+      color: rgba(255, 0, 0, 0.5);
+      pointer-events: none;
+      z-index: 5;
     }
     .thumb-grid {
       display: grid;
       gap: 4px;
       overflow-y: auto;
       padding-right: 4px;
-      margin-bottom: 10px;
+      margin-top: 0;
+      margin-bottom: 1px;
     }
     .thumb-grid img {
       width: 100%;
@@ -91,11 +69,14 @@
       list-style: none;
     }
     #preview-container {
-      margin-top: 20px;
+      margin-top: 1px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
     #preview-image {
-      max-width: 90%;
-      max-height: 80vh;
+      max-width: 80%;
+      max-height: 70vh;
       width: auto;
       height: auto;
       object-fit: contain;
@@ -106,7 +87,7 @@
     }
     a.button {
       display: inline-block;
-      margin-top: 20px;
+      margin-top: 1px;
       padding: 10px 20px;
       background-color: #6c757d;
       color: white;
@@ -120,31 +101,24 @@
 </head>
 <body>
   <div class="container">
-    <h1 id="page-title">{{ event }} - {{ time }} 구간 사진</h1>
 
-    {% if map_image_url %}
-    <div id="map-hover-area">
-      <span id="map-hover-text">📍 촬영 위치 보기</span>
-      <div id="map-popup">
-        <img src="{{ map_image_url }}" alt="지도">
-      </div>
+    <div class="thumb-grid-wrapper">
+      <div id="time-overlay">{{ time }}</div>
+      <ul class="thumb-grid" id="thumbGrid">
+        {% for item in items %}
+          <li>
+            <img 
+              src="{{ item.thumb }}" 
+              data-preview="{{ item.preview }}"
+              data-full="{{ item.full }}"
+              data-file-no="{{ item.file_no }}"
+              alt="썸네일"
+              onmouseover="showPreview(this.dataset.preview)"
+              ontouchstart="showPreview(this.dataset.preview)">
+          </li>
+        {% endfor %}
+      </ul>
     </div>
-    {% endif %}
-
-    <ul class="thumb-grid" id="thumbGrid">
-      {% for item in items %}
-        <li>
-          <img 
-            src="{{ item.thumb }}" 
-            data-preview="{{ item.preview }}"
-            data-full="{{ item.full }}"
-            data-file-no="{{ item.file_no }}"
-            alt="썸네일"
-            onmouseover="showPreview(this.dataset.preview)"
-            ontouchstart="showPreview(this.dataset.preview)">
-        </li>
-      {% endfor %}
-    </ul>
 
     <div id="preview-container">
       <img id="preview-image" src="" onclick="openFull()">
@@ -160,7 +134,6 @@
     const gap = 4;
     const rows = 2;
     const thumbGrid = document.getElementById('thumbGrid');
-    const titleElement = document.getElementById('page-title');
     const timelineMap = {{ timeline_map | tojson }};
 
     let thumbnailWidth;
@@ -170,8 +143,8 @@
     if (window.innerWidth <= 768) {
       if ("{{ event }}" === "250413_YMCA") {
         thumbnailsPerRow = 3;
-        thumbnailWidth = 90;
-        thumbnailHeight = 60;
+        thumbnailWidth = 135;
+        thumbnailHeight = 90;
       } else {
         thumbnailsPerRow = 4;
         thumbnailWidth = 90;
@@ -271,7 +244,7 @@
           }
         }
         if (matchedTime) {
-          titleElement.textContent = `{{ event }} - ${matchedTime} 구간 사진`;
+          document.getElementById('time-overlay').innerText = matchedTime;
         }
       }
     }
