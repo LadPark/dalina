@@ -148,7 +148,149 @@
   </div>
 
   <script>
-    // (스크립트 부분은 너가 가지고 있는 것과 동일하게 무한 스크롤, 프리뷰 연결 유지)
+    let fullImageUrl = '';
+    let loading = false;
+    let lastFileNo = {{ center_file_no }};
+    const gap = 4;
+    const rows = 2;
+    const thumbGrid = document.getElementById('thumbGrid');
+    const titleElement = document.getElementById('page-title');
+    const timelineMap = {{ timeline_map | tojson }};
+
+    let thumbnailWidth;
+    let thumbnailHeight;
+    let thumbnailsPerRow;
+
+    if (window.innerWidth <= 768) {
+      // 모바일
+      if ("{{ event }}" === "250413_YMCA") {
+        thumbnailsPerRow = 3;
+        thumbnailWidth = 90;
+        thumbnailHeight = 60;
+      } else {
+        thumbnailsPerRow = 4;
+        thumbnailWidth = 90;
+        thumbnailHeight = 135;
+      }
+    } else {
+      // PC
+      thumbnailWidth = 135;
+      thumbnailHeight = 90;
+      thumbnailsPerRow = Math.floor(window.innerWidth / thumbnailWidth);
+    }
+
+    // grid 세팅
+    thumbGrid.style.gridTemplateColumns = `repeat(${thumbnailsPerRow}, 1fr)`;
+    thumbGrid.style.gridAutoRows = thumbnailHeight + "px";
+    const totalGridHeight = (thumbnailHeight * rows) + (gap * (rows - 1));
+    thumbGrid.style.height = totalGridHeight + "px";
+    thumbGrid.style.overflowY = "auto";
+    thumbGrid.style.gap = `${gap}px`;
+
+    function showPreview(url) {
+      const previewImg = document.getElementById('preview-image');
+      previewImg.src = url;
+      previewImg.style.display = 'block';
+      fullImageUrl = event.target.dataset.full;
+    }
+
+    function openFull() {
+      if (fullImageUrl) {
+        window.open(fullImageUrl, '_blank');
+      }
+    }
+
+    async function loadMore(direction) {
+      if (loading) return;
+      loading = true;
+
+      const formData = new FormData();
+      formData.append('direction', direction);
+      formData.append('current_file_no', lastFileNo);
+
+      const res = await fetch(`/event/{{ event }}/timeline/{{ time }}/load_more`, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!res.ok) {
+        loading = false;
+        return;
+      }
+
+      const items = await res.json();
+
+      if (direction === "down") {
+        items.forEach(item => {
+          const li = document.createElement('li');
+          li.innerHTML = `<img src="${item.thumb}" data-preview="${item.preview}" data-full="${item.full}" data-file-no="${item.file_no}" alt="썸네일" onmouseover="showPreview(this.dataset.preview)" ontouchstart="showPreview(this.dataset.preview)">`;
+          thumbGrid.appendChild(li);
+          lastFileNo = item.file_no;
+        });
+      } else if (direction === "up") {
+        const oldScrollHeight = thumbGrid.scrollHeight;
+        items.reverse().forEach(item => {
+          const li = document.createElement('li');
+          li.innerHTML = `<img src="${item.thumb}" data-preview="${item.preview}" data-full="${item.full}" data-file-no="${item.file_no}" alt="썸네일" onmouseover="showPreview(this.dataset.preview)" ontouchstart="showPreview(this.dataset.preview)">`;
+          thumbGrid.prepend(li);
+          lastFileNo = item.file_no;
+        });
+        const newScrollHeight = thumbGrid.scrollHeight;
+        thumbGrid.scrollTop += (newScrollHeight - oldScrollHeight);
+      }
+
+      loading = false;
+    }
+
+    function updateTitleBasedOnScroll() {
+      const thumbnails = thumbGrid.querySelectorAll('img');
+      let closestThumbnail = null;
+      let closestTop = Infinity;
+
+      thumbnails.forEach(thumb => {
+        const rect = thumb.getBoundingClientRect();
+        const thumbTop = rect.top - thumbGrid.getBoundingClientRect().top;
+
+        if (thumbTop >= 0 && thumbTop < closestTop) {
+          closestTop = thumbTop;
+          closestThumbnail = thumb;
+        }
+      });
+
+      if (closestThumbnail) {
+        const fileNo = parseInt(closestThumbnail.dataset.fileNo);
+        const timelineKeys = Object.keys(timelineMap).map(k => parseInt(k)).sort((a, b) => a - b);
+        let matchedTime = null;
+        for (let i = timelineKeys.length - 1; i >= 0; i--) {
+          if (fileNo >= timelineKeys[i]) {
+            matchedTime = timelineMap[timelineKeys[i]];
+            break;
+          }
+        }
+        if (matchedTime) {
+          titleElement.textContent = `{{ event }} - ${matchedTime} 구간 사진`;
+        }
+      }
+    }
+
+    thumbGrid.addEventListener('scroll', () => {
+      if (loading) return;
+      const nearBottom = thumbGrid.scrollTop + thumbGrid.clientHeight >= thumbGrid.scrollHeight - 100;
+      const nearTop = thumbGrid.scrollTop <= 50;
+
+      if (nearTop) {
+        loadMore('up');
+      } else if (nearBottom) {
+        loadMore('down');
+      }
+
+      updateTitleBasedOnScroll();
+    });
+
+    setTimeout(() => {
+      thumbGrid.scrollTop = 1;
+      loadMore('up');
+    }, 100);
   </script>
 </body>
 </html>
