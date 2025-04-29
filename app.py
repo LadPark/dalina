@@ -7,7 +7,7 @@ from botocore.exceptions import ClientError
 
 app = Flask(__name__)
 data_path = "data"
-BUCKET_NAME = "dalina-photos"  # 너의 S3 버킷 이름으로 바꿔야 함
+BUCKET_NAME = "dalina-photos"
 
 # ─── S3 클라이언트 생성 ───────────────────────────────
 s3 = boto3.client(
@@ -100,14 +100,16 @@ def timeline(event):
         abort(404)
 
     df = pd.read_csv(csv_path, header=None, names=["file_no", "time"])
-
-    # 5분 단위만 필터링
-    filtered_df = df[df["time"].apply(lambda x: x.endswith(":00") or x.endswith(":05") or x.endswith(":10") or x.endswith(":15") or x.endswith(":20") or x.endswith(":25") or x.endswith(":30") or x.endswith(":35") or x.endswith(":40") or x.endswith(":45") or x.endswith(":50") or x.endswith(":55"))]
-
+    filtered_df = df[df["time"].apply(lambda x: any(x.endswith(f":{str(i).zfill(2)}") for i in range(0, 60, 5)))]
     time_list = filtered_df["time"].tolist()
 
-    return render_template("timeline.html", event=event, time_list=time_list)
+    map_image_path = os.path.join(app.static_folder, "maps", f"{event}.png")
+    if os.path.exists(map_image_path):
+        map_image_url = f"/static/maps/{event}.png"
+    else:
+        map_image_url = None
 
+    return render_template("timeline.html", event=event, time_list=time_list, map_image_url=map_image_url)
 
 # ─── 타임라인 특정 시간 선택 후 썸네일 초기 로딩 (timeline_time.html) ─────
 @app.route("/event/<event>/timeline/<time>")
@@ -126,7 +128,6 @@ def timeline_time(event, time):
     end_no = center_file_no + 15
     file_nos = list(range(start_no, end_no + 1))
 
-    # 썸네일 리스트 생성
     items = []
     for no in file_nos:
         filename = f"{no:05d}.jpg"
@@ -141,10 +142,13 @@ def timeline_time(event, time):
             "file_no": no
         })
 
-    # timeline_map 생성
-    timeline_map = {}
-    for _, row in df.iterrows():
-        timeline_map[int(row["file_no"])] = row["time"]
+    timeline_map = {int(row["file_no"]): row["time"] for _, row in df.iterrows()}
+
+    map_image_path = os.path.join(app.static_folder, "maps", f"{event}.png")
+    if os.path.exists(map_image_path):
+        map_image_url = f"/static/maps/{event}.png"
+    else:
+        map_image_url = None
 
     return render_template(
         "timeline_time.html",
@@ -152,13 +156,14 @@ def timeline_time(event, time):
         time=time,
         items=items,
         center_file_no=center_file_no,
-        timeline_map=timeline_map
+        timeline_map=timeline_map,
+        map_image_url=map_image_url
     )
 
 # ─── 추가 썸네일 로딩 (Lazy loading) ─────────────────
 @app.route("/event/<event>/timeline/<time>/load_more", methods=["POST"])
 def load_more(event, time):
-    direction = request.form.get("direction")  # "up" 또는 "down"
+    direction = request.form.get("direction")
     current_file_no = int(request.form.get("current_file_no"))
 
     if direction not in ["up", "down"]:
