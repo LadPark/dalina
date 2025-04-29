@@ -165,11 +165,11 @@ def load_more(event, time):
         abort(400)
 
     if direction == "up":
-        start_no = max(current_file_no - 14, 1)
+        start_no = max(current_file_no - 19, 1)
         end_no = current_file_no - 1
     else:
         start_no = current_file_no + 1
-        end_no = current_file_no + 14
+        end_no = current_file_no + 19
 
     file_nos = list(range(start_no, end_no + 1))
 
