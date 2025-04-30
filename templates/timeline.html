@@ -17,12 +17,12 @@
     }
     .container {
       max-width: 800px;
-      margin: 0 auto;
+      margin: 10px auto 0;
       background: white;
       border-radius: 10px;
       padding: 10px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      min-height: 100vh; /* 화면 전체 높이 채우기 */
+      min-height: 95dvh;
       display: flex;
       flex-direction: column;
     }
@@ -30,10 +30,17 @@
       font-size: 1.3rem;
       margin-bottom: 1px;
     }
+    .time-list-wrapper {
+      position: relative;
+      flex-grow: 1;
+    }
     .time-list {
       list-style: none;
       padding: 0;
-      flex-grow: 1;
+      margin: 0;
+      overflow-y: auto;
+      max-height: 60vh;
+      margin-bottom: 5px;
     }
     .time-list li {
       margin: 1px 0;
@@ -45,6 +52,26 @@
     }
     .time-list a:hover {
       text-decoration: underline;
+    }
+    .scroll-arrow {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 2rem;
+      color: red;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 5px 10px;
+      border-radius: 50%;
+      box-shadow: 0 0 5px rgba(0,0,0,0.3);
+      z-index: 5;
+      user-select: none;
+      display: none;
+    }
+    .scroll-up {
+      top: -10px;
+    }
+    .scroll-down {
+      bottom: 10px;
     }
     #map-hover-area {
       position: relative;
@@ -79,6 +106,23 @@
     #map-hover-area:hover #map-popup {
       display: block;
     }
+    a.back-button {
+      position: relative;
+      z-index: 1000;
+      touch-action: manipulation;
+      display: inline-block;
+      margin-top: auto;
+      margin-bottom: 5px;
+      padding: 10px 20px;
+      background-color: #6c757d;
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+      align-self: center;
+    }
+    a.back-button:hover {
+      background-color: #5a6268;
+    }
   </style>
 </head>
 <body>
@@ -94,15 +138,49 @@
     </div>
     {% endif %}
 
-    <ul class="time-list">
-      {% for time in time_list %}
-        <li>
-          <a href="/event/{{ event }}/timeline/{{ time }}">{{ time }}</a>
-        </li>
-      {% endfor %}
-    </ul>
+    <div class="time-list-wrapper">
+      <div class="scroll-arrow scroll-up" onclick="scrollTimeList('up')">▲</div>
+      <ul class="time-list" id="timeList">
+        {% for time in time_list %}
+          <li><a href="/event/{{ event }}/timeline/{{ time }}">{{ time }}</a></li>
+        {% endfor %}
+      </ul>
+      <div class="scroll-arrow scroll-down" onclick="scrollTimeList('down')">▼</div>
+    </div>
 
-    <a href="/" style="display:inline-block; margin-top:1px; text-decoration:none; color:#6c757d;">🔙 메인으로 돌아가기</a>
+    <a href="/" class="back-button">🔙 메인으로 돌아가기</a>
   </div>
+
+  <script>
+    const timeList = document.getElementById('timeList');
+    const upArrow = document.querySelector('.scroll-up');
+    const downArrow = document.querySelector('.scroll-down');
+
+    function updateArrowVisibility() {
+      const scrollTop = timeList.scrollTop;
+      const scrollHeight = timeList.scrollHeight;
+      const clientHeight = timeList.clientHeight;
+
+      if (scrollHeight <= clientHeight) {
+        upArrow.style.display = 'none';
+        downArrow.style.display = 'none';
+      } else {
+        upArrow.style.display = scrollTop <= 5 ? 'none' : 'block';
+        downArrow.style.display = scrollTop + clientHeight >= scrollHeight - 5 ? 'none' : 'block';
+      }
+    }
+
+    function scrollTimeList(direction) {
+      const amount = timeList.clientHeight * 0.8;
+      if (direction === 'up') {
+        timeList.scrollBy({ top: -amount, behavior: 'smooth' });
+      } else {
+        timeList.scrollBy({ top: amount, behavior: 'smooth' });
+      }
+    }
+
+    timeList.addEventListener('scroll', updateArrowVisibility);
+    window.addEventListener('load', updateArrowVisibility);
+  </script>
 </body>
 </html>

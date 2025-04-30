@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>검색 결과 - 달리나</title>
   <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
     body {
       margin: 0;
       padding: 0;
@@ -18,14 +21,14 @@
       max-width: 800px;
       margin: 5vh auto;
       background-color: rgba(255, 255, 255, 0.95);
-      padding: 30px;
+      padding: 10px;
       border-radius: 12px;
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
       text-align: center;
       position: relative;
     }
     h1 {
-      font-size: 1.5rem;
+      font-size: 1.1rem;
       margin-bottom: 10px;
     }
     .alert {
@@ -33,7 +36,6 @@
       font-size: 1rem;
       margin-bottom: 16px;
     }
-    /* 썸네일 영역 */
     .thumb-grid-wrapper {
       position: relative;
       margin: 20px 0;
@@ -52,10 +54,9 @@
       flex: 0 0 auto;
       scroll-snap-align: start;
     }
-    /* 썸네일 이미지 (세로 고정, 가로 비율 자유) */
     .thumb-grid img {
-      height: 130px;    /* 세로 고정 */
-      width: auto;      /* 가로는 원본 비율 */
+      height: 130px;
+      width: auto;
       object-fit: contain;
       border-radius: 6px;
       cursor: pointer;
@@ -65,7 +66,6 @@
       transform: scale(1.05);
       z-index: 10;
     }
-    /* 스크롤 화살표 */
     .scroll-arrow {
       position: absolute;
       top: 50%;
@@ -88,10 +88,12 @@
       right: -20px;
       display: none;
     }
-    /* 프리뷰 영역 */
     #preview-container {
-      margin-top: 30px;
+      margin-top: 10px;
       text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     #preview-image {
       max-width: 90%;
@@ -104,23 +106,37 @@
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
       cursor: pointer;
     }
-    /* 스크롤바 숨기기 */
     .thumb-grid::-webkit-scrollbar {
       display: none;
     }
-    a.button {
-      display: inline-block;
+    .button-group {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
       margin-top: 20px;
+    }
+    .button-group a {
+      width: 220px;
       padding: 12px 24px;
       font-size: 1.1rem;
-      background-color: #0066cc;
-      color: white;
-      text-decoration: none;
+      text-align: center;
       border-radius: 5px;
+      text-decoration: none;
+      color: white;
       transition: background-color 0.3s;
     }
-    a.button:hover {
+    .button-group a.primary {
+      background-color: #0066cc;
+    }
+    .button-group a.primary:hover {
       background-color: #0056a3;
+    }
+    .button-group a.secondary {
+      background-color: #6c757d;
+    }
+    .button-group a.secondary:hover {
+      background-color: #5a6268;
     }
   </style>
 </head>
@@ -158,8 +174,9 @@
       <p>해당 배번의 사진이 없습니다.</p>
     {% endif %}
 
-    <div>
-      <a href="/" class="button">🔍 다른 배번 검색하기</a>
+    <div class="button-group">
+      <a href="/" class="primary">🔍 다른 배번 검색하기</a>
+      <a href="/event/{{ event }}/timeline" class="secondary">🏃 배번 없이 전체 사진 보기</a>
     </div>
   </div>
 
@@ -179,7 +196,6 @@
       }
     });
 
-    // 스크롤 화살표 제어
     const thumbGrid = document.getElementById('thumbGrid');
     const scrollLeftArrow = document.querySelector('.scroll-left');
     const scrollRightArrow = document.querySelector('.scroll-right');
@@ -206,7 +222,8 @@
       }
     }
 
-    thumbGrid.addEventListener('scroll', updateArrows);
+    thumbGrid?.addEventListener('scroll', updateArrows);
+    window.addEventListener('load', updateArrows);
 
     function scrollThumbnails(direction) {
       const amount = thumbGrid.clientWidth * 0.8;
@@ -216,8 +233,6 @@
         thumbGrid.scrollBy({ left: amount, behavior: 'smooth' });
       }
     }
-
-    window.addEventListener('load', updateArrows);
   </script>
 </body>
 </html>
