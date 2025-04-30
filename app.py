@@ -31,10 +31,10 @@ def generate_presigned_url(key, bucket=BUCKET_NAME, expires=3600):
 # ─── 메인 페이지 (index.html) ────────────────────────
 @app.route("/")
 def index():
-    events = events = sorted(
-    [d for d in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, d))],
-    key=lambda d: os.path.getmtime(os.path.join(data_path, d)),
-    reverse=True  # 가장 최근 수정된 폴더가 맨 위로
+    events = sorted(
+        [d for d in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, d))],
+        key=lambda d: d[:6],  # '250413_YMCA' → '250413'
+        reverse=True          # 최신 날짜가 위로
     )
     suggestions_map = {}
     for ev in events:
