@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from flask import Flask, render_template, request, abort, jsonify
+from flask import Flask, render_template, request, abort, jsonify, redirect
 import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
@@ -33,8 +33,8 @@ def generate_presigned_url(key, bucket=BUCKET_NAME, expires=3600):
 def index():
     events = sorted(
         [d for d in os.listdir(data_path) if os.path.isdir(os.path.join(data_path, d))],
-        key=lambda d: d[:6],  # '250413_YMCA' → '250413'
-        reverse=True          # 최신 날짜가 위로
+        key=lambda d: d[:6],
+        reverse=True
     )
     suggestions_map = {}
     for ev in events:
@@ -77,6 +77,7 @@ def search():
                 "thumb": generate_presigned_url(thumb_key),
                 "preview": generate_presigned_url(preview_key),
                 "full": generate_presigned_url(full_key),
+                "file_no": int(fn[:5])
             })
 
     return render_template("results.html", event=event, bib=bib, items=items)
@@ -105,17 +106,15 @@ def timeline(event):
 
     df = pd.read_csv(csv_path, header=None, names=["file_no", "time"])
     filtered_df = df[df["time"].apply(lambda x: any(x.endswith(f":{str(i).zfill(2)}") for i in range(0, 60, 5)))]
+
     time_list = filtered_df["time"].tolist()
 
     map_image_path = os.path.join(app.static_folder, "maps", f"{event}.png")
-    if os.path.exists(map_image_path):
-        map_image_url = f"/static/maps/{event}.png"
-    else:
-        map_image_url = None
+    map_image_url = f"/static/maps/{event}.png" if os.path.exists(map_image_path) else None
 
     return render_template("timeline.html", event=event, time_list=time_list, map_image_url=map_image_url)
 
-# ─── 타임라인 특정 시간 선택 후 썸네일 초기 로딩 (timeline_time.html) ─────
+# ─── 타임라인 특정 시간 썸네일 로딩 (focus 반영됨) ─────
 @app.route("/event/<event>/timeline/<time>")
 def timeline_time(event, time):
     csv_path = os.path.join(data_path, event, "timeline.csv")
@@ -127,9 +126,18 @@ def timeline_time(event, time):
     if row.empty:
         abort(404)
 
-    center_file_no = int(row.iloc[0]["file_no"])
-    start_no = max(center_file_no - 15, 1)
-    end_no = center_file_no + 15
+    focus = request.args.get("focus", type=int)
+
+    if focus:
+        # ✅ focus 사진을 리스트 중간에 위치하게 로딩
+        start_no = max(focus - 10, 1)
+        end_no = focus + 20
+        center_file_no = focus
+    else:
+        center_file_no = int(row.iloc[0]["file_no"])
+        start_no = max(center_file_no - 15, 1)
+        end_no = center_file_no + 15
+
     file_nos = list(range(start_no, end_no + 1))
 
     items = []
@@ -149,10 +157,7 @@ def timeline_time(event, time):
     timeline_map = {int(row["file_no"]): row["time"] for _, row in df.iterrows()}
 
     map_image_path = os.path.join(app.static_folder, "maps", f"{event}.png")
-    if os.path.exists(map_image_path):
-        map_image_url = f"/static/maps/{event}.png"
-    else:
-        map_image_url = None
+    map_image_url = f"/static/maps/{event}.png" if os.path.exists(map_image_path) else None
 
     return render_template(
         "timeline_time.html",
@@ -198,6 +203,19 @@ def load_more(event, time):
 
     return jsonify(items)
 
-# ─── 메인 ─────────────────────────────────────────────
+# ─── 특정 사진 기준 타임라인 이동 ─────────────────────
+@app.route("/event/<event>/timeline/from/<int:file_no>")
+def timeline_from_file_no(event, file_no):
+    csv_path = os.path.join(data_path, event, "timeline.csv")
+    if not os.path.exists(csv_path):
+        abort(404)
+    df = pd.read_csv(csv_path, header=None, names=["file_no", "time"])
+    row = df[df["file_no"] >= file_no].head(1)
+    if row.empty:
+        abort(404)
+    time = row.iloc[0]["time"]
+    return redirect(f"/event/{event}/timeline/{time}?focus={file_no}")
+
+# ─── 메인 실행 ─────────────────────────────────────────
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
