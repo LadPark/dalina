@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -157,9 +158,10 @@
                 src="{{ item.thumb }}" 
                 data-preview="{{ item.preview }}"
                 data-full="{{ item.full }}"
+                data-file-no="{{ item.file_no }}"
                 alt="{{ item.name }}"
-                onmouseover="showPreview(this.dataset.preview, this.dataset.full)"
-                ontouchstart="showPreview(this.dataset.preview, this.dataset.full)"
+                onmouseover="showPreview(this.dataset.preview, this.dataset.full, this.dataset.fileNo)"
+                ontouchstart="showPreview(this.dataset.preview, this.dataset.full, this.dataset.fileNo)"
               >
             </li>
           {% endfor %}
@@ -177,18 +179,24 @@
 
     <div class="button-group">
       <a href="/" class="primary">🔍 다른 배번 검색하기</a>
-      <a href="/event/{{ event }}/timeline" class="secondary">🏃 배번 없이 전체 사진 보기</a>
+      <a id="view-surround" href="#" class="secondary" style="display: none;">📂 내 사진 앞뒤 검색하기</a>
     </div>
   </div>
 
   <script>
     let fullImageUrl = '';
+    let currentFileNo = null;
 
-    function showPreview(previewUrl, fullUrl) {
+    function showPreview(previewUrl, fullUrl, fileNo) {
       const previewImg = document.getElementById('preview-image');
       previewImg.src = previewUrl;
       previewImg.style.display = 'block';
       fullImageUrl = fullUrl;
+      currentFileNo = fileNo;
+
+      const surroundBtn = document.getElementById('view-surround');
+      surroundBtn.href = `/event/{{ event }}/timeline/from/${fileNo}`;
+      surroundBtn.style.display = 'inline-block';
     }
 
     document.getElementById('preview-image').addEventListener('click', function() {
