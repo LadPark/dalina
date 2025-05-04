@@ -98,7 +98,6 @@
       z-index: 1000;
       touch-action: manipulation;
     }
-  
     a.button:hover {
       background-color: #5a6268;
     }
@@ -106,7 +105,6 @@
 </head>
 <body>
   <div class="container">
-
     <div class="thumb-grid-wrapper">
       <div id="time-overlay">{{ time }}</div>
       <ul class="thumb-grid" id="thumbGrid">
@@ -269,13 +267,24 @@
     });
 
     setTimeout(() => {
-    thumbGrid.scrollTop = 1;
-    loadMore('up');
-    setTimeout(() => {
-    // 최초 진입 시, 아래 방향 썸네일도 추가 로드
-      loadMore('down');
-    }, 300);
-  }, 100);
+      thumbGrid.scrollTop = 1;
+      loadMore('up');
+      setTimeout(() => {
+        loadMore('down');
+      }, 300);
+    }, 100);
+
+    // ✅ focus 된 사진으로 스크롤 이동
+    window.addEventListener("load", function () {
+      const params = new URLSearchParams(window.location.search);
+      const focus = params.get("focus");
+      if (focus) {
+        const target = document.querySelector(`img[data-file-no="${focus}"]`);
+        if (target) {
+          target.scrollIntoView({ behavior: "auto", block: "center" });
+        }
+      }
+    });
   </script>
 </body>
 </html>
