@@ -269,9 +269,13 @@
     });
 
     setTimeout(() => {
-      thumbGrid.scrollTop = 1;
-      loadMore('up');
-    }, 100);
+    thumbGrid.scrollTop = 1;
+    loadMore('up');
+    setTimeout(() => {
+    // 최초 진입 시, 아래 방향 썸네일도 추가 로드
+      loadMore('down');
+    }, 300);
+  }, 100);
   </script>
 </body>
 </html>
