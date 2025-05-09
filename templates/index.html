@@ -162,6 +162,11 @@
 
     <!-- 배번 없이 전체 보기 버튼 추가 -->
     <button class="button-secondary" onclick="goToTimeline()">🏃 배번 없이 전체 사진 보기</button>
+
+    <!-- 얼굴 인식 사진 검색 버튼 추가 -->
+    <form action="/search_face" method="get" style="margin-top: 10px;">
+      <button type="submit">얼굴 인식 사진 검색</button>
+    </form>
   </div>
 
   <div class="post-container">
@@ -177,7 +182,7 @@
 
   <script>
     // 자동완성 데이터
-    const suggestionsMap = {{ suggestions_map | tojson }};
+    const suggestionsMap = {{ suggestions_map | tojson }}; // 자동완성 데이터는 서버에서 전달됨
     const eventSelect    = document.getElementById("event");
     const input          = document.getElementById("bib");
     const list           = document.getElementById("suggestions");

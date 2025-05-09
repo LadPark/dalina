@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>얼굴 인식 사진 검색</title>
+    <link rel="icon" href="{{ url_for('static', filename='logo.png') }}" type="image/png">
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+            background: url('/static/bg.png') no-repeat center center fixed;
+            background-size: cover;
+        }
+        .container {
+            width: 70vw;
+            max-width: 500px;
+            margin: 10px auto;
+            background-color: rgba(255, 255, 255, 0.85);
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        .logo {
+            width: 100px;
+            margin-bottom: 5px;
+            align-self: center;
+        }
+        input[type="file"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 8px;
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="/static/logo.svg" alt="Dalina Logo" class="logo">
+        <h2>얼굴 사진을 업로드하세요</h2>
+        <form action="/process_face" method="post" enctype="multipart/form-data">
+            <!-- 이벤트 선택 드롭다운 추가 -->
+            <select name="event" required>
+                <option value="" disabled selected>이벤트를 선택하세요</option>
+                <!-- 여기에 실제 이벤트 목록을 동적으로 삽입 -->
+                {% for event in events %}
+                    <option value="{{ event }}">{{ event }}</option>
+                {% endfor %}
+            </select>
+            <input type="file" name="face_image" accept="image/*" required>
+            <button type="submit">얼굴 인식 시작</button>
+        </form>
+        <div style="text-align: center; margin-top: 10px;">
+            <img src="{{ url_for('static', filename='example/Example.jpg') }}" 
+                alt="좋은 사진 예시" 
+                style="max-width: 300px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.2);">
+         <p style="font-size: 1rem; color: red; font-weight: bold; margin-top: 12px; line-height: 1.5;">
+               예시처럼 얼굴이 정면에서<br>
+               크게 잘 보이는 사진을 업로드하면<br>
+               인식 성공률이 높아집니다.
+    </p>
+</div>
+    </div>
+</body>
+</html>

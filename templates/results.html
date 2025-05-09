@@ -174,7 +174,7 @@
       </div>
 
     {% else %}
-      <p>해당 배번의 사진이 없습니다.</p>
+      <p class="alert">{{ message | safe or "해당 배번의 사진이 없습니다." }}</p>
     {% endif %}
 
     <div class="button-group">
