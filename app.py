@@ -78,6 +78,9 @@ def load_all_face_vectors():
             continuation_token = response.get("NextContinuationToken")
         else:
             break
+            
+# 얼굴 벡터 로딩 (🔥 반드시 이 위치에서 전역 실행)
+load_all_face_vectors()
 
 @app.before_request
 def start_resource_tracking():
@@ -359,5 +362,4 @@ def timeline_from_file_no(event, file_no):
 
 # ─── 메인 실행 ─────────────────────────────────────────
 if __name__ == "__main__":
-    load_all_face_vectors()
     app.run(host="0.0.0.0", port=5000, debug=True)
