@@ -28,8 +28,12 @@ def load_resized_image_pil(path, max_size=1200):
     최대 길이가 max_size를 넘지 않도록 PIL로 이미지 열고 리사이즈 (RAM 절약)
     """
     img = Image.open(path)
-    img.thumbnail((max_size, max_size), Image.ANTIALIAS)
-    return np.array(img.convert("RGB"))  # InsightFace는 RGB ndarray 필요
+    img = img.convert("RGB")
+    width, height = img.size
+    scale = min(max_size / width, max_size / height, 1.0)
+    new_size = (int(width * scale), int(height * scale))
+    img = img.resize(new_size, Image.ANTIALIAS)
+    return np.asarray(img, dtype=np.uint8)  # dtype 명시
 
 def extract_face_vector(image_path):
     """
