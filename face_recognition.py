@@ -22,20 +22,31 @@ pca = joblib.load(pca_path)
 s3 = boto3.client('s3')
 
 # ---------------------------------------------------------
+def resize_image_for_inference(image, max_dim=1600):
+    """
+    최대 길이가 max_dim을 넘지 않도록 비율 유지하며 이미지 축소
+    """
+    height, width = image.shape[:2]
+    scale = min(max_dim / width, max_dim / height, 1.0)  # 축소만, 확대 금지
+    new_w, new_h = int(width * scale), int(height * scale)
+    return cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_AREA)
+
 def extract_face_vector(image_path):
     """
     주어진 이미지 경로에서 얼굴 벡터를 추출한 후 PCA로 128차원으로 축소
     """
     image = cv2.imread(image_path)
-    faces = app.get(image)
+    if image is None:
+        print("❌ 이미지 로드 실패")
+        return None
+
+    resized = resize_image_for_inference(image)  # ← 리사이즈 추가
+    faces = app.get(resized)
 
     if len(faces) == 0:
         return None  # 얼굴이 없으면 None 반환
 
-    # 512차원 벡터 → numpy
     face_embedding = np.array(faces[0].embedding).reshape(1, -1)
-
-    # PCA 변환 → 128차원
     face_embedding_128 = pca.transform(face_embedding)[0]
 
     print("Extracted 128-dim face vector:", face_embedding_128.tolist())
