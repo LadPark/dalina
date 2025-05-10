@@ -1,9 +1,10 @@
 import json
-import cv2
 import boto3
 import numpy as np
 import joblib
 import os
+import gc
+from PIL import Image
 from insightface.app import FaceAnalysis
 from numpy import dot
 from numpy.linalg import norm
@@ -22,35 +23,35 @@ pca = joblib.load(pca_path)
 s3 = boto3.client('s3')
 
 # ---------------------------------------------------------
-def resize_image_for_inference(image, max_dim=1600):
+def load_resized_image_pil(path, max_size=1200):
     """
-    최대 길이가 max_dim을 넘지 않도록 비율 유지하며 이미지 축소
+    최대 길이가 max_size를 넘지 않도록 PIL로 이미지 열고 리사이즈 (RAM 절약)
     """
-    height, width = image.shape[:2]
-    scale = min(max_dim / width, max_dim / height, 1.0)  # 축소만, 확대 금지
-    new_w, new_h = int(width * scale), int(height * scale)
-    return cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_AREA)
+    img = Image.open(path)
+    img.thumbnail((max_size, max_size), Image.ANTIALIAS)
+    return np.array(img.convert("RGB"))  # InsightFace는 RGB ndarray 필요
 
 def extract_face_vector(image_path):
     """
     주어진 이미지 경로에서 얼굴 벡터를 추출한 후 PCA로 128차원으로 축소
     """
-    image = cv2.imread(image_path)
-    if image is None:
-        print("❌ 이미지 로드 실패")
+    try:
+        resized = load_resized_image_pil(image_path)
+        faces = app.get(resized)
+        if len(faces) == 0:
+            return None
+
+        vec = np.array(faces[0].embedding, dtype=np.float32)
+        face_embedding_128 = pca.transform([vec])[0]
+
+        del resized, faces, vec
+        gc.collect()
+
+        print("Extracted 128-dim face vector:", face_embedding_128.tolist())
+        return face_embedding_128.tolist()
+    except Exception as e:
+        print(f"❌ 벡터 추출 중 오류: {e}")
         return None
-
-    resized = resize_image_for_inference(image)  # ← 리사이즈 추가
-    faces = app.get(resized)
-
-    if len(faces) == 0:
-        return None  # 얼굴이 없으면 None 반환
-
-    face_embedding = np.array(faces[0].embedding).reshape(1, -1)
-    face_embedding_128 = pca.transform(face_embedding)[0]
-
-    print("Extracted 128-dim face vector:", face_embedding_128.tolist())
-    return face_embedding_128.tolist()
 
 # ---------------------------------------------------------
 def load_face_vectors_from_s3(bucket_name, event_name, file_name="face_vectors.json1"):
