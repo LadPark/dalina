@@ -102,6 +102,7 @@ def log_resource_usage(response):
     print(f"🕒 총 처리 시간 (wall): {wall_end - g.wall_start:.3f} 초")
     print(f"⚙️ CPU 시간: {cpu_end - g.cpu_start:.3f} 초")
     print(f"🧠 메모리 사용량 (시작 → 종료): {g.mem_start:.2f} MB → {mem_end:.2f} MB")
+    print(f"💾 총 증가한 메모리 사용량: {mem_end - mem_start:.2f} MB")
     print(f"📈 메모리 최대 피크: {peak / (1024 * 1024):.2f} MB")
     return response
 
