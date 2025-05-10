@@ -1,10 +1,9 @@
 import json
+import cv2
 import boto3
 import numpy as np
 import joblib
 import os
-import gc
-import cv2
 from insightface.app import FaceAnalysis
 from numpy import dot
 from numpy.linalg import norm
@@ -12,7 +11,7 @@ from numpy.linalg import norm
 # ---------------------------------------------------------
 # 모델 초기화 (insightface)
 app = FaceAnalysis(name="buffalo_sc", providers=["CPUExecutionProvider"])
-app.prepare(ctx_id=0, det_size=(1024, 1024))  # 탐지 해상도 넉넉하게 설정
+app.prepare(ctx_id=0)
 
 # PCA 모델 로드 (512 → 128)
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -23,44 +22,24 @@ pca = joblib.load(pca_path)
 s3 = boto3.client('s3')
 
 # ---------------------------------------------------------
-def load_resized_image_cv2(path, max_width=1600):
-    """
-    OpenCV로 이미지 로드 후, 비율 유지하며 최대 너비에 맞게 리사이즈하고 RGB로 변환
-    """
-    img = cv2.imread(path)  # BGR
-    if img is None:
-        raise ValueError(f"이미지를 불러올 수 없습니다: {path}")
-
-    height, width = img.shape[:2]
-    scale = min(max_width / width, 1.0)
-    new_size = (int(width * scale), int(height * scale))
-    img = cv2.resize(img, new_size, interpolation=cv2.INTER_AREA)
-
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # InsightFace는 RGB 기대함
-    return img
-
 def extract_face_vector(image_path):
     """
     주어진 이미지 경로에서 얼굴 벡터를 추출한 후 PCA로 128차원으로 축소
     """
-    try:
-        resized = load_resized_image_cv2(image_path)
-        faces = app.get(resized)
-        if len(faces) == 0:
-            print("❌ 얼굴을 찾을 수 없습니다.")
-            return None
+    image = cv2.imread(image_path)
+    faces = app.get(image)
 
-        vec = np.array(faces[0].embedding, dtype=np.float32)
-        face_embedding_128 = pca.transform([vec])[0]
+    if len(faces) == 0:
+        return None  # 얼굴이 없으면 None 반환
 
-        del resized, faces, vec
-        gc.collect()
+    # 512차원 벡터 → numpy
+    face_embedding = np.array(faces[0].embedding).reshape(1, -1)
 
-        print("Extracted 128-dim face vector:", face_embedding_128.tolist())
-        return face_embedding_128.tolist()
-    except Exception as e:
-        print(f"❌ 벡터 추출 중 오류: {e}")
-        return None
+    # PCA 변환 → 128차원
+    face_embedding_128 = pca.transform(face_embedding)[0]
+
+    print("Extracted 128-dim face vector:", face_embedding_128.tolist())
+    return face_embedding_128.tolist()
 
 # ---------------------------------------------------------
 def load_face_vectors_from_s3(bucket_name, event_name, file_name="face_vectors.json1"):
