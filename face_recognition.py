@@ -25,15 +25,14 @@ s3 = boto3.client('s3')
 # ---------------------------------------------------------
 def load_resized_image_pil(path, max_size=1200):
     """
-    최대 길이가 max_size를 넘지 않도록 PIL로 이미지 열고 리사이즈 (RAM 절약)
+    PIL로 이미지 열고, 비율 유지하며 최대 크기 제한 → numpy RGB 배열로 변환
     """
-    img = Image.open(path)
-    img = img.convert("RGB")
+    img = Image.open(path).convert("RGB")
     width, height = img.size
     scale = min(max_size / width, max_size / height, 1.0)
     new_size = (int(width * scale), int(height * scale))
     img = img.resize(new_size, Image.ANTIALIAS)
-    return np.asarray(img, dtype=np.uint8)  # dtype 명시
+    return np.asarray(img, dtype=np.uint8)
 
 def extract_face_vector(image_path):
     """
