@@ -78,7 +78,7 @@ def load_all_face_vectors():
             continuation_token = response.get("NextContinuationToken")
         else:
             break
-            
+
 # 얼굴 벡터 로딩 (🔥 반드시 이 위치에서 전역 실행)
 load_all_face_vectors()
 
@@ -92,19 +92,23 @@ def start_resource_tracking():
 
 @app.after_request
 def log_resource_usage(response):
-    wall_end = time.time()
-    cpu_end = time.process_time()
-    mem_end = g.process.memory_info().rss / 1024 / 1024
-    current, peak = tracemalloc.get_traced_memory()
-    tracemalloc.stop()
+    try:
+        wall_end = time.time()
+        cpu_end = time.process_time()
+        mem_end = g.process.memory_info().rss / 1024 / 1024
+        current, peak = tracemalloc.get_traced_memory()
+        tracemalloc.stop()
 
-    print(f"\n🔧 [요청별] 리소스 사용 요약:")
-    print(f"🕒 총 처리 시간 (wall): {wall_end - g.wall_start:.3f} 초")
-    print(f"⚙️ CPU 시간: {cpu_end - g.cpu_start:.3f} 초")
-    print(f"🧠 메모리 사용량 (시작 → 종료): {g.mem_start:.2f} MB → {mem_end:.2f} MB")
-    print(f"💾 총 증가한 메모리 사용량: {mem_end - mem_start:.2f} MB")
-    print(f"📈 메모리 최대 피크: {peak / (1024 * 1024):.2f} MB")
+        if hasattr(g, 'mem_start'):
+            print(f"\n🔧 [요청별] 리소스 사용 요약:")
+            print(f"🕒 총 처리 시간 (wall): {wall_end - g.wall_start:.3f} 초")
+            print(f"⚙️ CPU 시간: {cpu_end - g.cpu_start:.3f} 초")
+            print(f"🧠 메모리 사용량 (시작 → 종료): {g.mem_start:.2f} MB → {mem_end:.2f} MB")
+            print(f"📈 메모리 최대 피크: {peak / (1024 * 1024):.2f} MB")
+    except Exception as e:
+        print(f"[리소스 로깅 실패] {e}")
     return response
+
 
 @app.route("/")
 def index():
