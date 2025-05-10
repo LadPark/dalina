@@ -4,6 +4,8 @@ import numpy as np
 import joblib
 import os
 import gc
+import cv2
+import uuid
 from PIL import Image
 from insightface.app import FaceAnalysis
 from numpy import dot
@@ -23,23 +25,30 @@ pca = joblib.load(pca_path)
 s3 = boto3.client('s3')
 
 # ---------------------------------------------------------
-def load_resized_image_pil(path, max_size=1200):
+def load_resized_image_cv2_via_pil(path, max_size=1200):
     """
-    PIL로 이미지 열고, 비율 유지하며 최대 크기 제한 → numpy RGB 배열로 변환
+    PIL로 이미지 리사이즈 후 JPEG로 저장하고, OpenCV로 다시 로딩 (BGR 유지)
     """
     img = Image.open(path).convert("RGB")
     width, height = img.size
     scale = min(max_size / width, max_size / height, 1.0)
     new_size = (int(width * scale), int(height * scale))
     img = img.resize(new_size, Image.ANTIALIAS)
-    return np.asarray(img, dtype=np.uint8)
+
+    # temp 파일로 저장 후 다시 OpenCV로 읽음
+    temp_path = f"temp_{uuid.uuid4().hex}.jpg"
+    img.save(temp_path, format="JPEG")
+    img_cv2 = cv2.imread(temp_path)
+    os.remove(temp_path)  # 임시 파일 삭제
+
+    return img_cv2
 
 def extract_face_vector(image_path):
     """
     주어진 이미지 경로에서 얼굴 벡터를 추출한 후 PCA로 128차원으로 축소
     """
     try:
-        resized = load_resized_image_pil(image_path)
+        resized = load_resized_image_cv2_via_pil(image_path)
         faces = app.get(resized)
         if len(faces) == 0:
             return None
