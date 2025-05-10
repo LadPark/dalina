@@ -5,8 +5,6 @@ import joblib
 import os
 import gc
 import cv2
-import uuid
-from PIL import Image
 from insightface.app import FaceAnalysis
 from numpy import dot
 from numpy.linalg import norm
@@ -14,7 +12,7 @@ from numpy.linalg import norm
 # ---------------------------------------------------------
 # 모델 초기화 (insightface)
 app = FaceAnalysis(name="buffalo_sc", providers=["CPUExecutionProvider"])
-app.prepare(ctx_id=0)
+app.prepare(ctx_id=0, det_size=(1024, 1024))  # 탐지 해상도 넉넉하게 설정
 
 # PCA 모델 로드 (512 → 128)
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -25,32 +23,31 @@ pca = joblib.load(pca_path)
 s3 = boto3.client('s3')
 
 # ---------------------------------------------------------
-def load_resized_image_cv2_via_pil(path, max_size=1200):
+def load_resized_image_cv2(path, max_width=1600):
     """
-    PIL로 이미지 리사이즈 후 JPEG로 저장하고, OpenCV로 다시 로딩 (BGR 유지)
+    OpenCV로 이미지 로드 후, 비율 유지하며 최대 너비에 맞게 리사이즈하고 RGB로 변환
     """
-    img = Image.open(path).convert("RGB")
-    width, height = img.size
-    scale = min(max_size / width, max_size / height, 1.0)
+    img = cv2.imread(path)  # BGR
+    if img is None:
+        raise ValueError(f"이미지를 불러올 수 없습니다: {path}")
+
+    height, width = img.shape[:2]
+    scale = min(max_width / width, 1.0)
     new_size = (int(width * scale), int(height * scale))
-    img = img.resize(new_size, Image.ANTIALIAS)
+    img = cv2.resize(img, new_size, interpolation=cv2.INTER_AREA)
 
-    # temp 파일로 저장 후 다시 OpenCV로 읽음
-    temp_path = f"temp_{uuid.uuid4().hex}.jpg"
-    img.save(temp_path, format="JPEG")
-    img_cv2 = cv2.imread(temp_path)
-    os.remove(temp_path)  # 임시 파일 삭제
-
-    return img_cv2
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # InsightFace는 RGB 기대함
+    return img
 
 def extract_face_vector(image_path):
     """
     주어진 이미지 경로에서 얼굴 벡터를 추출한 후 PCA로 128차원으로 축소
     """
     try:
-        resized = load_resized_image_cv2_via_pil(image_path)
+        resized = load_resized_image_cv2(image_path)
         faces = app.get(resized)
         if len(faces) == 0:
+            print("❌ 얼굴을 찾을 수 없습니다.")
             return None
 
         vec = np.array(faces[0].embedding, dtype=np.float32)
