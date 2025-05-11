@@ -103,6 +103,18 @@ def start_resource_tracking():
 @app.after_request
 def log_resource_usage(response):
     try:
+        path = request.path
+        user_agent = request.user_agent.string.lower()
+
+        # 의미 없는 요청이면 리소스 로깅 생략
+        if (
+            path.startswith("/static/") or
+            path.endswith(".ico") or
+            "bot" in user_agent or
+            "facebookexternalhit" in user_agent
+        ):
+            return response
+
         wall_end = time.time()
         cpu_end = time.process_time()
         mem_end = g.process.memory_info().rss / 1024 / 1024
@@ -110,7 +122,7 @@ def log_resource_usage(response):
         tracemalloc.stop()
 
         if hasattr(g, 'mem_start'):
-            print(f"\n🔧 [요청별] 리소스 사용 요약:")
+            print(f"\\n🔧 [요청별] 리소스 사용 요약:")
             print(f"🕒 총 처리 시간 (wall): {wall_end - g.wall_start:.3f} 초")
             print(f"⚙️ CPU 시간: {cpu_end - g.cpu_start:.3f} 초")
             print(f"🧠 메모리 사용량 (시작 → 종료): {g.mem_start:.2f} MB → {mem_end:.2f} MB")
