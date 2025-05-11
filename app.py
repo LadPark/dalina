@@ -90,6 +90,16 @@ def start_resource_tracking():
     g.mem_start = g.process.memory_info().rss / 1024 / 1024
     tracemalloc.start()
 
+    # 사용자가 실제 상호작용하는 요청만 로그
+    path = request.path
+    method = request.method
+    if (
+        path.startswith("/search_face") or
+        path.startswith("/process_face") or
+        (path.startswith("/search") and method == "POST" and "bib" in request.form)
+    ):
+        print(f"[사용자 요청] {method} {path} from {request.remote_addr} | UA: {request.user_agent.string}")
+
 @app.after_request
 def log_resource_usage(response):
     try:
