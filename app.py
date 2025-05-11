@@ -122,7 +122,7 @@ def log_resource_usage(response):
         tracemalloc.stop()
 
         if hasattr(g, 'mem_start'):
-            print(f"\\n🔧 [요청별] 리소스 사용 요약:")
+            print(f"\n🔧 [요청별] 리소스 사용 요약:")
             print(f"🕒 총 처리 시간 (wall): {wall_end - g.wall_start:.3f} 초")
             print(f"⚙️ CPU 시간: {cpu_end - g.cpu_start:.3f} 초")
             print(f"🧠 메모리 사용량 (시작 → 종료): {g.mem_start:.2f} MB → {mem_end:.2f} MB")
@@ -130,6 +130,7 @@ def log_resource_usage(response):
     except Exception as e:
         print(f"[리소스 로깅 실패] {e}")
     return response
+
 
 
 @app.route("/")
