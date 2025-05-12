@@ -17,6 +17,9 @@ app = Flask(__name__)
 data_path = "data"
 BUCKET_NAME = "dalina-photos"
 
+# 고유 사용자 추적용 집합
+unique_users = set()
+
 # 얼굴 벡터 캐시
 face_vectors_cache = {}
 
@@ -89,6 +92,14 @@ def start_resource_tracking():
     g.process = psutil.Process(os.getpid())
     g.mem_start = g.process.memory_info().rss / 1024 / 1024
     tracemalloc.start()
+
+     # 사용자 추적 (디버깅용)
+    ip = request.remote_addr
+    ua = request.headers.get("User-Agent", "")
+    user_key = f"{ip}_{ua}"
+    if user_key not in unique_users:
+        unique_users.add(user_key)
+        print(f"[👥 누적 사용자 수] {len(unique_users)}명")
 
     # 사용자가 실제 상호작용하는 요청만 로그
     path = request.path
