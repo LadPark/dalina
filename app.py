@@ -103,10 +103,21 @@ def start_resource_tracking():
     ip = request.headers.get("X-Forwarded-For", request.remote_addr)
     ua = request.headers.get("User-Agent", "")
     user_key = f"{ip}_{ua}"
-    if user_key not in unique_users:
-        print(f"[🆕 새로운 사용자] {user_key}")
-    unique_users.add(user_key)
-    print(f"[👥 누적 사용자 수] {len(unique_users)}명")
+    ua_lower = ua.lower()
+    is_bot = (
+        "bot" in ua_lower or
+        "crawler" in ua_lower or
+        "spider" in ua_lower or
+        "bingbot" in ua_lower or
+        "facebookexternalhit" in ua_lower or
+        "google" in ua_lower
+    )
+
+    if not is_bot:
+        if user_key not in unique_users:
+            print(f"[🆕 새로운 사용자] {user_key}")
+        unique_users.add(user_key)
+        print(f"[👥 누적 사용자 수] {len(unique_users)}명")
 
     # 사용자 요청 로그
     path = request.path
