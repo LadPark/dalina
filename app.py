@@ -11,17 +11,23 @@ import tracemalloc
 import json
 import numpy as np
 import uuid
+import logging
 from werkzeug.utils import secure_filename
+
+# 기본 요청 로깅 설정
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.DEBUG)
 
 app = Flask(__name__)
 data_path = "data"
 BUCKET_NAME = "dalina-photos"
 
-# 고유 사용자 추적용 집합
-unique_users = set()
-
 # 얼굴 벡터 캐시
 face_vectors_cache = {}
+
+# 고유 사용자 추적용
+unique_users = set()
 
 # S3 클라이언트 생성
 s3 = boto3.client(
@@ -93,15 +99,16 @@ def start_resource_tracking():
     g.mem_start = g.process.memory_info().rss / 1024 / 1024
     tracemalloc.start()
 
-     # 사용자 추적 (디버깅용)
-    ip = request.remote_addr
+    # 고유 사용자 추적
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr)
     ua = request.headers.get("User-Agent", "")
     user_key = f"{ip}_{ua}"
     if user_key not in unique_users:
-        unique_users.add(user_key)
-        print(f"[👥 누적 사용자 수] {len(unique_users)}명")
+        print(f"[🆕 새로운 사용자] {user_key}")
+    unique_users.add(user_key)
+    print(f"[👥 누적 사용자 수] {len(unique_users)}명")
 
-    # 사용자가 실제 상호작용하는 요청만 로그
+    # 사용자 요청 로그
     path = request.path
     method = request.method
     if (
@@ -109,7 +116,7 @@ def start_resource_tracking():
         path.startswith("/process_face") or
         (path.startswith("/search") and method == "POST" and "bib" in request.form)
     ):
-        print(f"[사용자 요청] {method} {path} from {request.remote_addr} | UA: {request.user_agent.string}")
+        print(f"[사용자 요청] {method} {path} from {ip} | UA: {ua}")
 
 @app.after_request
 def log_resource_usage(response):
@@ -141,8 +148,6 @@ def log_resource_usage(response):
     except Exception as e:
         print(f"[리소스 로깅 실패] {e}")
     return response
-
-
 
 @app.route("/")
 def index():
