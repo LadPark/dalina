@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from flask import Flask, render_template, request, abort, jsonify, redirect, g
+from flask import Flask, render_template, request, abort, jsonify, redirect, g, make_response
 import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
@@ -88,7 +88,7 @@ def load_all_face_vectors():
         else:
             break
 
-# 얼굴 벡터 로딩 (🔥 반드시 이 위치에서 전역 실행)
+# 얼굴 벡터 로딩
 load_all_face_vectors()
 
 @app.before_request
@@ -99,29 +99,32 @@ def start_resource_tracking():
     g.mem_start = g.process.memory_info().rss / 1024 / 1024
     tracemalloc.start()
 
-    # 고유 사용자 추적
-    ip = request.headers.get("X-Forwarded-For", request.remote_addr)
-    ua = request.headers.get("User-Agent", "")
-    user_key = f"{ip}_{ua}"
-    ua_lower = ua.lower()
+    # 봇 필터링
+    ua = request.headers.get("User-Agent", "").lower()
     is_bot = (
-        "bot" in ua_lower or
-        "crawler" in ua_lower or
-        "spider" in ua_lower or
-        "bingbot" in ua_lower or
-        "facebookexternalhit" in ua_lower or
-        "google" in ua_lower
+        "bot" in ua or
+        "crawler" in ua or
+        "spider" in ua or
+        "bingbot" in ua or
+        "facebookexternalhit" in ua or
+        "google" in ua
     )
+    if is_bot:
+        return  # 봇은 카운트 및 쿠키 제외
 
-    if not is_bot:
-        if user_key not in unique_users:
-            print(f"[🆕 새로운 사용자] {user_key}")
-        unique_users.add(user_key)
-        print(f"[👥 누적 사용자 수] {len(unique_users)}명")
+    # 사용자 쿠키 검사 및 생성
+    user_id = request.cookies.get("user_id")
+    if not user_id:
+        user_id = str(uuid.uuid4())
+        g.new_user_id = user_id
+        print(f"[🆕 새로운 사용자] {user_id}")
+    unique_users.add(user_id)
+    print(f"[👥 누적 사용자 수] {len(unique_users)}명")
 
-    # 사용자 요청 로그
+    # 요청 로그 (선택적으로 유지)
     path = request.path
     method = request.method
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr)
     if (
         path.startswith("/search_face") or
         path.startswith("/process_face") or
@@ -132,10 +135,11 @@ def start_resource_tracking():
 @app.after_request
 def log_resource_usage(response):
     try:
+        if hasattr(g, 'new_user_id'):
+            response.set_cookie('user_id', g.new_user_id, max_age=60*60*24*30)
+
         path = request.path
         user_agent = request.user_agent.string.lower()
-
-        # 의미 없는 요청이면 리소스 로깅 생략
         if (
             path.startswith("/static/") or
             path.endswith(".ico") or
@@ -159,6 +163,7 @@ def log_resource_usage(response):
     except Exception as e:
         print(f"[리소스 로깅 실패] {e}")
     return response
+
 
 @app.route("/")
 def index():
