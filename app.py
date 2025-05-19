@@ -232,7 +232,7 @@ def process_face():
     temp_folder = 'temp'
     if not os.path.exists(temp_folder):
         os.makedirs(temp_folder)
-        
+
     filename = f"{uuid.uuid4().hex}.jpg"
     file_path = os.path.join(temp_folder, filename)
     file.save(file_path)
@@ -244,8 +244,12 @@ def process_face():
     tracemalloc.start()
 
     query_vector = extract_face_vector(file_path)
+
+    # ⛔ temp 파일 삭제
+    os.remove(file_path)
+
     if query_vector is None:
-         return render_template("results.html", items=[], event="얼굴 인식", message="😢 사진에서 얼굴을 인식 할 수 없습니다.<br>다른 사진으로 시도하세요")
+        return render_template("results.html", items=[], event="얼굴 인식", message="😢 사진에서 얼굴을 인식 할 수 없습니다.<br>다른 사진으로 시도하세요")
 
     event = request.form.get("event")
     if not event:
@@ -265,10 +269,11 @@ def process_face():
     print(f"⚙️ CPU 시간: {cpu_end - cpu_start:.3f} 초")
     print(f"🧠 메모리 사용량 (시작 → 종료): {mem_start:.2f} MB → {mem_end:.2f} MB")
     print(f"📈 메모리 최대 피크: {peak / (1024 * 1024):.2f} MB")
+    print("[DEBUG] process_face 진입 직후 메모리:", mem_end, "MB")
 
     if not search_results:
         return render_template("results.html", items=[], event=event, message="😢 일치하는 얼굴이 없습니다.")
-    
+
     items = []
     for filename, similarity in search_results:
         thumb_key = f"{event}/thumbs/{filename}"
@@ -280,6 +285,11 @@ def process_face():
             "full": generate_presigned_url(full_key),
             "file_no": int(filename[:5])
         })
+
+    # ✅ 사용 완료된 객체 삭제 및 GC 수동 호출
+    import gc
+    del query_vector, search_results, face_vectors
+    gc.collect()
 
     return render_template("results.html", items=items, event=event)
 
@@ -422,4 +432,15 @@ def timeline_from_file_no(event, file_no):
 
 # ─── 메인 실행 ─────────────────────────────────────────
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
+
+import threading
+def log_memory():
+    import psutil, time
+    p = psutil.Process(os.getpid())
+    while True:
+        mem = p.memory_info().rss / 1024 / 1024
+        print(f"[MEM] 전체 메모리 사용량: {mem:.2f} MB")
+        time.sleep(10)
+
+threading.Thread(target=log_memory, daemon=True).start()
