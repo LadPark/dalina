@@ -441,6 +441,6 @@ def log_memory():
     while True:
         mem = p.memory_info().rss / 1024 / 1024
         print(f"[MEM] 전체 메모리 사용량: {mem:.2f} MB")
-        time.sleep(10)
+        time.sleep(300)
 
 threading.Thread(target=log_memory, daemon=True).start()
